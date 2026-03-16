@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VervangingsPlanner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #f0f4f8; color: #1a2332; min-height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+  /* ── HEADER ── */
+  header { background: #1a2332; color: #fff; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-title { font-family: 'DM Serif Display'; font-size: 18px; letter-spacing: .3px; }
+  .logo-sub { font-size: 11px; color: #94a3b8; margin-top: -2px; }
+  nav { display: flex; gap: 4px; }
+  nav button { padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; background: transparent; color: #94a3b8; transition: all .2s; font-family: inherit; }
+  nav button.active { background: rgba(255,255,255,.15); color: #fff; }
+  .user-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+
+  /* ── LAYOUT ── */
+  main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── CARDS ── */
+  .card { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card-pad { padding: 22px; }
+
+  /* ── BUTTONS ── */
+  .btn { font-family: inherit; cursor: pointer; border-radius: 8px; font-weight: 600; transition: all .2s; }
+  .btn-primary { background: #2563eb; color: #fff; border: none; padding: 10px 20px; font-size: 13px; }
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+  .btn-secondary { background: #fff; color: #475569; border: 1.5px solid #e2e8f0; padding: 9px 16px; font-size: 13px; }
+  .btn-secondary:hover { background: #f8fafc; }
+  .btn-danger { background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 6px; }
+
+  /* ── INPUTS ── */
+  input[type=text], input[type=email], input[type=number], input[type=time], select, textarea {
+    font-family: inherit; font-size: 13px; padding: 9px 12px; border-radius: 8px;
+    border: 1.5px solid #e2e8f0; outline: none; background: #fafbfc; width: 100%;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus { border-color: #3b82f6; }
+
+  /* ── STATS GRID ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { padding: 20px 24px; border-left: 4px solid; }
+  .stat-num { font-size: 28px; font-weight: 700; }
+  .stat-lbl { font-size: 12px; color: #64748b; margin-top: 2px; font-weight: 500; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 12px 16px; text-align: left; font-weight: 700; font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; white-space: nowrap; }
+  td { padding: 13px 16px; border-bottom: 1px solid #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { cursor: pointer; transition: background .15s; }
+  tbody tr:hover { background: #f8fafc; }
+  tfoot td { background: #f8fafc; border-top: 2px solid #e2e8f0; font-weight: 700; }
+
+  /* ── TAGS / BADGES ── */
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .badge-yellow { background: #fef3c7; color: #92400e; }
+  .badge-blue { background: #eff6ff; color: #1d4ed8; }
+  .dag-tag { padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 700; display: inline-block; margin: 1px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 3px; transition: width .4s ease; }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; z-index: 500; }
+  .modal-box { background: #fff; border-radius: 18px; width: 640px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+  .modal-header { padding: 22px 28px 18px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: flex-start; position: sticky; top: 0; background: #fff; border-radius: 18px 18px 0 0; z-index: 2; }
+  .modal-body { padding: 22px 28px; display: flex; flex-direction: column; gap: 20px; }
+  .modal-section-title { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
+  .btn-close { border: none; background: #f1f5f9; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; color: #64748b; line-height: 32px; text-align: center; }
+
+  /* ── TOAST ── */
+  #toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.2); display: none; animation: slideIn .3s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateX(20px) } to { opacity:1; transform:translateX(0) } }
+
+  /* ── GRID HELPERS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .flex { display: flex; }
+  .flex-col { display: flex; flex-direction: column; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+
+  /* ── FIELD LABEL ── */
+  .field-label { font-size: 11px; font-weight: 700; color: #64748b; display: block; margin-bottom: 5px; letter-spacing: .3px; }
+
+  /* ── DIENST ROW ── */
+  .dienst-row { border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; background: #fafbfc; }
+  .dienst-grid { display: grid; grid-template-columns: 110px 90px 90px 80px 1fr 34px; gap: 8px; align-items: end; }
+
+  /* ── CONTACT CARD ── */
+  .contact-card { border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+  .contact-view { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .contact-edit { padding: 14px; }
+
+  /* ── AFWEZIGE CARD ── */
+  .afwezige-card { border-radius: 14px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 16px; overflow: hidden; }
+
+  /* ── WEEKOVERZICHT ── */
+  .week-overview { background: #eff6ff; border-radius: 10px; padding: 12px 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  .week-day-box { background: #fff; border-radius: 8px; padding: 5px 10px; text-align: center; }
+
+  /* ── KAART GRID ── */
+  .kaart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap: 16px; }
+
+  /* ── SEARCH DROPDOWN ── */
+  .search-dropdown { border: 1.5px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; background: #fff; max-height: 200px; overflow-y: auto; position: absolute; width: 100%; z-index: 50; }
+  .search-dropdown-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background .15s; }
+  .search-dropdown-item:hover { background: #eff6ff; }
+  .search-wrap { position: relative; }
+
+  /* ── DASHBOARD LAYOUT ── */
+  .dash-grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+
+  /* ── DIENST INLINE ── */
+  .dienst-inline { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid; margin-bottom: 8px; }
+
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .dash-grid { grid-template-columns: 1fr; }
+    .dienst-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <div>
+      <div class="logo-title">VervangingsPlanner</div>
+      <div class="logo-sub" id="weekLabel"></div>
+    </div>
+  </div>
+  <nav>
+    <button class="btn active" onclick="setTab('dashboard')" id="nav-dashboard">📋 Dashboard</button>
+    <button class="btn" onclick="setTab('rayonboek')" id="nav-rayonboek">🗂 Rayonboek</button>
+    <button class="btn" onclick="setTab('medewerkers')" id="nav-medewerkers">👥 Medewerkers</button>
+  </nav>
+  <div class="user-badge">
+    <div class="avatar">B</div>
+    Beheerder
+  </div>
+</header>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="tab-dashboard" class="tab-content active">
+    <div class="stats-grid" id="dashStats"></div>
+    <div class="dash-grid">
+      <!-- Invoerpanel -->
+      <div class="card card-pad" style="align-self:start">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:18px">➕ Medewerker afmelden</h2>
+        <div class="mb-12">
+          <label class="field-label">NAAM MEDEWERKER</label>
+          <div class="search-wrap">
+            <input type="text" id="zoekInput" placeholder="Begin met typen..." oninput="zoekMedewerker(this.value)" autocomplete="off">
+            <div class="search-dropdown" id="zoekDropdown" style="display:none"></div>
+          </div>
+        </div>
+        <div class="mb-12">
+          <label class="field-label">REDEN AFWEZIGHEID</label>
+          <select id="redenSelect">
+            <option>Verlof</option><option>Ziekte</option><option>Studiedag</option>
+            <option>Bijzonder verlof</option><option>Overig</option>
+          </select>
+        </div>
+        <div class="mb-16">
+          <label class="field-label">PERIODE (optioneel)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#94a3b8;display:block;margin-bottom:3px">VAN</label>
+              <input type="date" id="datumVan" style="font-size:12px;padding:8px 10px">
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#94a3b8;display:block;margin-bottom:3px">TOT EN MET</label>
+              <input type="date" id="datumTot" style="font-size:12px;padding:8px 10px">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="voegAfwezigeToe()">Toevoegen aan rooster →</button>
+        <div id="dashEmpty" style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:10px;text-align:center;color:#94a3b8;font-size:13px;display:none">
+          Nog geen afwezigen deze week
+        </div>
+      </div>
+      <!-- Afwezigenlijst -->
+      <div id="afwezigenList"></div>
+    </div>
+  </div>
+
+  <!-- ── RAYONBOEK ── -->
+  <div id="tab-rayonboek" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <h1 style="font-family:'DM Serif Display';font-size:24px">Rayonboek</h1>
+        <p id="rayonSubtitle" style="color:#64748b;font-size:13px;margin-top:4px"></p>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-secondary" onclick="toggleRayonWeergave()" id="weergaveBtn">⬛ Kaartweergave</button>
+        <button class="btn btn-primary" onclick="toggleNieuweLocatie()">+ Locatie toevoegen</button>
+      </div>
+    </div>
+    <div class="stats-grid" id="rayonStats"></div>
+    <div class="flex gap-8 mb-12">
+      <input type="text" id="rayonZoek" placeholder="🔍  Zoek op naam of stad..." oninput="renderRayon()" style="flex:1">
+      <select id="rayonSort" onchange="renderRayon()" style="width:220px">
+        <option value="uren">Sorteren: uren/week ↓</option>
+        <option value="naam">Sorteren: naam A–Z</option>
+        <option value="stad">Sorteren: stad A–Z</option>
+      </select>
+    </div>
+    <div id="nieuweLocatieForm" style="display:none" class="card card-pad mb-16" style="border-top:3px solid #3b82f6">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px">Nieuwe locatie</h3>
+      <div class="grid-3 mb-12">
+        <div><label class="field-label">NAAM LOCATIE</label><input type="text" id="nl_naam" placeholder="Naam"></div>
+        <div><label class="field-label">ADRES</label><input type="text" id="nl_adres" placeholder="Adres"></div>
+        <div><label class="field-label">POSTCODE</label><input type="text" id="nl_postcode" placeholder="Postcode"></div>
+        <div><label class="field-label">STAD</label><input type="text" id="nl_stad" placeholder="Stad"></div>
+        <div><label class="field-label">TELEFOON</label><input type="text" id="nl_telefoon" placeholder="Telefoon"></div>
+        <div><label class="field-label">UREN/WEEK</label><input type="number" id="nl_uren" step="0.25" placeholder="0.00"></div>
+      </div>
+      <div class="mb-12">
+        <label class="field-label">WERKDAGEN</label>
+        <div class="flex gap-8" id="nl_dagButtons"></div>
+      </div>
+      <div class="flex gap-8 mb-12" style="align-items:center">
+        <label class="field-label" style="margin:0">KLEUR:</label>
+        <input type="color" id="nl_kleur" value="#3b82f6" style="width:40px;height:32px;border:none;cursor:pointer;border-radius:6px;padding:0">
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-primary" onclick="slaLocatieOp()">Opslaan</button>
+        <button class="btn btn-secondary" onclick="toggleNieuweLocatie()">Annuleren</button>
+      </div>
+    </div>
+    <div id="rayonContent"></div>
+  </div>
+
+  <!-- ── MEDEWERKERS ── -->
+  <div id="tab-medewerkers" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <h1 style="font-family:'DM Serif Display';font-size:24px">Medewerkers</h1>
+        <p id="mwSubtitle" style="color:#64748b;font-size:13px;margin-top:4px"></p>
+      </div>
+      <button class="btn btn-primary" onclick="openNieuweMedewerker()">+ Medewerker toevoegen</button>
+    </div>
+    <div class="flex gap-8 mb-12">
+      <input type="text" id="mwZoek" placeholder="🔍  Zoek op naam of functie..." oninput="renderMedewerkers()" style="flex:1">
+      <select id="mwLocFilter" onchange="renderMedewerkers()" style="width:200px"></select>
+      <select id="mwSort" onchange="renderMedewerkers()" style="width:160px">
+        <option value="naam">Naam A–Z</option>
+        <option value="uren">Uren ↓</option>
+        <option value="locatie">Locatie A–Z</option>
+      </select>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <table>
+        <thead><tr>
+          <th>Naam</th><th>Functie</th><th>Locatie</th>
+          <th>Uren/week</th><th>Diensten</th><th>Invaller(s)</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="mwTbody"></tbody>
+        <tfoot id="mwTfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── LOCATIE MODAL ── -->
+<div id="locatieModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)sluitLocatieModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="flex gap-12" style="align-items:center">
+        <div id="lm_icon" style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px">🏢</div>
+        <div>
+          <div id="lm_naam" style="font-family:'DM Serif Display';font-size:20px"></div>
+          <div id="lm_stad" style="font-size:12px;color:#94a3b8"></div>
+        </div>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-secondary btn-sm" onclick="toggleLocatieBewerk()" id="lm_bewerkBtn">✏️ Bewerken</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:none;padding:5px 12px;border-radius:6px;font-weight:600" onclick="verwijderLocatie()">🗑 Verwijderen</button>
+        <button class="btn-close" onclick="sluitLocatieModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="locatieModalBody"></div>
+  </div>
+</div>
+
+<!-- ── MEDEWERKER MODAL ── -->
+<div id="medewerkerModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)sluitMwModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="flex gap-12" style="align-items:center">
+        <div id="mm_avatar" style="width:40px;height:40px;border-radius:11px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-weight:800;color:#2563eb;font-size:16px"></div>
+        <div>
+          <div id="mm_naam_header" style="font-family:'DM Serif Display';font-size:19px"></div>
+          <div id="mm_functie_header" style="font-size:12px;color:#94a3b8"></div>
+        </div>
+      </div>
+      <button class="btn-close" onclick="sluitMwModal()">✕</button>
+    </div>
+    <div class="modal-body" id="mwModalBody"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const KLEUREN = ["#2563eb","#16a34a","#9333ea","#ea580c","#0891b2","#be185d","#d97706","#065f46","#7c3aed","#b91c1c","#0369a1","#4d7c0f","#6b21a8","#c2410c","#0f766e","#1d4ed8","#15803d","#7e22ce","#b45309","#0e7490"];
+const DAGEN = ["ma","di","wo","do","vr"];
+const DAGEN_LANG = {ma:"Maandag",di:"Dinsdag",wo:"Woensdag",do:"Donderdag",vr:"Vrijdag"};
+
+let locaties = [{"id": 1, "naam": "Humankind KDV Het Kleurrijk", "adres": "Willy Brandtplein", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 15.0, "telefoon": "", "contactpersonen": [{"naam": "Kim de Braal", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#2563eb", "opmerkingen": ""}, {"id": 2, "naam": "Rotocoat Dieren", "adres": "Kanaaldijk 40", "postcode": "", "stad": "Spankeren", "urenPerWeek": 12.0, "telefoon": "", "contactpersonen": [{"naam": "Marco Stendler", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#16a34a", "opmerkingen": ""}, {"id": 3, "naam": "Forfarmers", "adres": "Hummeloseweg 85", "postcode": "", "stad": "Zelhem", "urenPerWeek": 16.0, "telefoon": "", "contactpersonen": [{"naam": "Ivo Wentink", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#9333ea", "opmerkingen": ""}, {"id": 4, "naam": "Berend Botje Bambino", "adres": "Ds. v. Dorpstraat 3", "postcode": "", "stad": "Gendringen", "urenPerWeek": 17.5, "telefoon": "", "contactpersonen": [{"naam": "Edith ten Hove", "functie": "", "telefoon": "", "email": ""}, {"naam": "Diana Lanke", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#ea580c", "opmerkingen": ""}, {"id": 5, "naam": "Kentalis", "adres": "Vondelstraat 220", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 13.5, "telefoon": "", "contactpersonen": [{"naam": "Linda van Kessel", "functie": "", "telefoon": "", "email": ""}, {"naam": "Frank Ebbeskkamp", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#0891b2", "opmerkingen": "Alarmcode: 2208A aan en uit"}, {"id": 6, "naam": "Humankind Fluisterwoud", "adres": "W. v/d Berghstraat 1", "postcode": "", "stad": "´s Heerenberg", "urenPerWeek": 12.5, "telefoon": "", "contactpersonen": [{"naam": "Nick Huitink", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#be185d", "opmerkingen": "Code 1980, sleutelkastje 1973"}, {"id": 7, "naam": "Humankind KDV Waterkriebels", "adres": "Pr.Hendrikstraat 34A", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 10.0, "telefoon": "", "contactpersonen": [{"naam": "Carin Vos", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#d97706", "opmerkingen": "Codesleutelkastje: 3579"}, {"id": 8, "naam": "Humankind KDV Sesamkids", "adres": "Belderstraat 15", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 8.75, "telefoon": "", "contactpersonen": [{"naam": "Linde Lubbers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#065f46", "opmerkingen": ""}, {"id": 9, "naam": "Humankind KDV Tovertuin", "adres": "Pelgrimstraat 59d", "postcode": "", "stad": "Gaanderen", "urenPerWeek": 8.75, "telefoon": "", "contactpersonen": [{"naam": "N.n.b.", "functie": "", "telefoon": "", "email": ""}, {"naam": "Petra Wolke", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#7c3aed", "opmerkingen": ""}, {"id": 10, "naam": "Humankind KDV  Toverberg", "adres": "Reeënstraat 20e", "postcode": "", "stad": "Silvolde", "urenPerWeek": 7.5, "telefoon": "", "contactpersonen": [{"naam": "Tessa Beerten", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#b91c1c", "opmerkingen": "Code 1458"}, {"id": 11, "naam": "REBO Groep Laag Soeren", "adres": "Priesnitzlaan 1", "postcode": "", "stad": "Laag-Soeren", "urenPerWeek": 7.5, "telefoon": "", "contactpersonen": [{"naam": "Coen de Vree", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#0369a1", "opmerkingen": ""}, {"id": 12, "naam": "Humankind BSO Het Speelparadijs", "adres": "Dichterseweg 147", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 6.25, "telefoon": "", "contactpersonen": [{"naam": "Bernadet van Dijk", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#4d7c0f", "opmerkingen": ""}, {"id": 13, "naam": "Humankind KDV De Vuurvliegjes", "adres": "Kerkstraat 70", "postcode": "", "stad": "Giesbeek", "urenPerWeek": 6.0, "telefoon": "", "contactpersonen": [{"naam": "Danielle Lamers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#6b21a8", "opmerkingen": ""}, {"id": 14, "naam": "ING Doetinchem", "adres": "Raadhuisstraat 6", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 5.8, "telefoon": "", "contactpersonen": [{"naam": "Anne-Kee Boeijink - Rondeel", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#c2410c", "opmerkingen": "Medewerkers moeten in bezit zijn van ING screening"}, {"id": 15, "naam": "Humankind KDV Pippeloentje", "adres": "Torontostraat 81", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 10.0, "telefoon": "", "contactpersonen": [{"naam": "Bernadet van Dijk", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#0f766e", "opmerkingen": ""}, {"id": 16, "naam": "Humankind Madelief", "adres": "Hummeloseweg 16", "postcode": "", "stad": "Zelhem", "urenPerWeek": 5.0, "telefoon": "", "contactpersonen": [{"naam": "Jill Bergervoet", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#1d4ed8", "opmerkingen": "toegang 1411"}, {"id": 17, "naam": "Humankind Tierelantijn", "adres": "Sarinkkamp 1", "postcode": "", "stad": "Hengelo", "urenPerWeek": 5.0, "telefoon": "", "contactpersonen": [{"naam": "Jill Bergervoet", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#15803d", "opmerkingen": "Locatie gaat waarschijnlijk in 2026 weer open."}, {"id": 18, "naam": "Humankind KDV Rozemarijn", "adres": "Rozenstraat 14b", "postcode": "", "stad": "Hengelo", "urenPerWeek": 10.0, "telefoon": "", "contactpersonen": [{"naam": "Jill Bergervoet", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#7e22ce", "opmerkingen": ""}, {"id": 19, "naam": "Jeugdbescherming Gelderland", "adres": "Hanzestraat 1", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 3.75, "telefoon": "", "contactpersonen": [{"naam": "Heidi Koren", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#b45309", "opmerkingen": ""}, {"id": 20, "naam": "REBO Vastgoed Doetinchem", "adres": "Plantsoenstraat 77", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 4.5, "telefoon": "", "contactpersonen": [{"naam": "Coen de Vree", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#0e7490", "opmerkingen": "TOT MAX 21:00 dan gaat alarm er op. Weekend niet."}, {"id": 21, "naam": "Humankind BSO Eigenwijs", "adres": "Lavendel 19", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 5.0, "telefoon": "", "contactpersonen": [{"naam": "Linde Lubbers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#2563eb", "opmerkingen": ""}, {"id": 22, "naam": "Humankind PO Het Onderdeurtje", "adres": "Houtsmastraat 11C", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 3.75, "telefoon": "", "contactpersonen": [{"naam": "Jill Bergervoet", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#16a34a", "opmerkingen": ""}, {"id": 23, "naam": "Sterrenbos", "adres": "Montferlandsestraat 5", "postcode": "", "stad": "'s Heerenberg", "urenPerWeek": 3.75, "telefoon": "", "contactpersonen": [{"naam": "Nick Huitink", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#9333ea", "opmerkingen": "Sleutel B"}, {"id": 24, "naam": "Humankind Dierenbende", "adres": "Vinkwijk 6", "postcode": "", "stad": "Zeddam", "urenPerWeek": 3.0, "telefoon": "", "contactpersonen": [{"naam": "Cassandra", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#ea580c", "opmerkingen": ""}, {"id": 25, "naam": "Boots apotheek Rheden", "adres": "Haverweg 5a", "postcode": "", "stad": "Rheden", "urenPerWeek": 3.0, "telefoon": "", "contactpersonen": [{"naam": "Shafiq Niaz", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#0891b2", "opmerkingen": ""}, {"id": 26, "naam": "Nat. Politie Dinxperlo", "adres": "Raadhuisstraat 4", "postcode": "", "stad": "Dinxperlo", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Cynthia Rower", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma"], "kleur": "#be185d", "opmerkingen": ""}, {"id": 27, "naam": "Asset Rail", "adres": "Innovatieweg 26a", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Anne Hollander (asset)", "functie": "", "telefoon": "", "email": ""}, {"naam": "Roel de Hondt (Heyday)", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "do"], "kleur": "#d97706", "opmerkingen": ""}, {"id": 28, "naam": "Randstad Doetinchem", "adres": "Raadhuisstraat 8", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Wisselt regelmatig", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "do"], "kleur": "#065f46", "opmerkingen": ""}, {"id": 29, "naam": "Tempo-Team Doetinchem", "adres": "Plantsoenstraat 73a", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 1.0, "telefoon": "", "contactpersonen": [{"naam": "Lieke Nieswand", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["di"], "kleur": "#7c3aed", "opmerkingen": ""}, {"id": 30, "naam": "SSC Doetinchem", "adres": "Fabriekstraat 17", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Frank Stinessen", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["wo"], "kleur": "#b91c1c", "opmerkingen": ""}, {"id": 31, "naam": "Monuta Dieren", "adres": "Harderwijkerweg 5A", "postcode": "6952 AB", "stad": "Dieren", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Jorijn Egbers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["wo"], "kleur": "#0369a1", "opmerkingen": "Code sleutelkastje 01932 alarmcode 2046"}, {"id": 32, "naam": "Monuta Ulft", "adres": "Nijverheidsweg 4", "postcode": "", "stad": "Ulft", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Jorijn Egbers", "functie": "", "telefoon": "0314 360 550", "email": "rbmidden@monuta.nl"}], "werkdagen": ["wo", "vr"], "kleur": "#4d7c0f", "opmerkingen": ""}, {"id": 33, "naam": "REBO Vastgoed Dieren", "adres": "Wilhelminaweg 27", "postcode": "", "stad": "Dieren", "urenPerWeek": 1.48, "telefoon": "", "contactpersonen": [{"naam": "Coen de Vree", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#6b21a8", "opmerkingen": ""}, {"id": 34, "naam": "Tempo Team Unit 7283", "adres": "Weteringstraat 21", "postcode": "", "stad": "'s-Heerenberg", "urenPerWeek": 1.5, "telefoon": "", "contactpersonen": [{"naam": "Dyonne", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["di"], "kleur": "#c2410c", "opmerkingen": ""}, {"id": 35, "naam": "AGC Doetinchem", "adres": "Doetinchemseweg 48", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 1.25, "telefoon": "", "contactpersonen": [], "werkdagen": ["di"], "kleur": "#0f766e", "opmerkingen": ""}, {"id": 36, "naam": "Adecco", "adres": "Terborgseweg 142", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 1.0, "telefoon": "", "contactpersonen": [{"naam": "Marieke Visser", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["di"], "kleur": "#1d4ed8", "opmerkingen": ""}, {"id": 37, "naam": "SaniTronics", "adres": "Koepoortwal 19", "postcode": "", "stad": "Doesburg", "urenPerWeek": 1.0, "telefoon": "", "contactpersonen": [{"naam": "Desiree van Dijk", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["wo"], "kleur": "#15803d", "opmerkingen": ""}, {"id": 38, "naam": "Mentaal Beter Doetinchem", "adres": "Keppelseweg 4", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Barry Lor", "functie": "", "telefoon": "", "email": ""}, {"naam": "Nina Geurts (MBV) - Anja Luijkx (bestellingen)", "functie": "", "telefoon": "", "email": ""}, {"naam": "Kristel der Nederlanden (MBJ)", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["di", "vr"], "kleur": "#7e22ce", "opmerkingen": ""}, {"id": 39, "naam": "Mentaal Beter Spankeren", "adres": "Spankerenseweg 37", "postcode": "", "stad": "Dieren", "urenPerWeek": 2.5, "telefoon": "", "contactpersonen": [{"naam": "Barry Lor", "functie": "", "telefoon": "", "email": ""}, {"naam": "Anouk Jansen", "functie": "", "telefoon": "", "email": ""}, {"naam": "Lotte Wijdeven", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["di", "do"], "kleur": "#b45309", "opmerkingen": ""}, {"id": 40, "naam": "Monuta Doetinchem", "adres": "Keppelseweg 40", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 2.5, "telefoon": "", "contactpersonen": [{"naam": "Jorijn  Egbers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "do"], "kleur": "#0e7490", "opmerkingen": "Code sleutelkastje 01923"}, {"id": 41, "naam": "CBRE Ahold Zutphen", "adres": "Polsbroek 77", "postcode": "", "stad": "Zutphen", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "Bert Deterd", "functie": "", "telefoon": "", "email": ""}, {"naam": "Wieger Verkruyssen (CBRE)", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#2563eb", "opmerkingen": ""}, {"id": 42, "naam": "Nat.Politie Eefde", "adres": "Kapperallee 53A", "postcode": "", "stad": "Eefde", "urenPerWeek": 2.0, "telefoon": "", "contactpersonen": [{"naam": "Freerk Wigarda", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["wo", "vr"], "kleur": "#16a34a", "opmerkingen": "Code kastje kleedruimte: 2766"}, {"id": 43, "naam": "Partou Lea Dasberg", "adres": "Markolle 5", "postcode": "", "stad": "Zutphen", "urenPerWeek": 9.0, "telefoon": "", "contactpersonen": [{"naam": "Susanne te West", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do", "vr"], "kleur": "#9333ea", "opmerkingen": ""}, {"id": 44, "naam": "Partou Het Zwanevlot", "adres": "het Zwanevlot 325", "postcode": "", "stad": "Zutphen", "urenPerWeek": 9.0, "telefoon": "", "contactpersonen": [{"naam": "Patricia Lonink", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#ea580c", "opmerkingen": ""}, {"id": 45, "naam": "Partou de Polbeek", "adres": "van Dorenborghstraat 1A", "postcode": "", "stad": "", "urenPerWeek": 6.0, "telefoon": "", "contactpersonen": [{"naam": "Christa Schraverus", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do", "vr"], "kleur": "#0891b2", "opmerkingen": "Code sleutelkastje: 07122305 Sleutel 0072"}, {"id": 46, "naam": "Partou de Hoven", "adres": "Mulderskamp 164A", "postcode": "", "stad": "Zutphen", "urenPerWeek": 3.75, "telefoon": "", "contactpersonen": [{"naam": "Loes Vordeman", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#be185d", "opmerkingen": ""}, {"id": 47, "naam": "Partou Koetje Boe", "adres": "Laarstraat 58", "postcode": "", "stad": "Zutphen", "urenPerWeek": 4.0, "telefoon": "", "contactpersonen": [{"naam": "Christa Schraverus", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#d97706", "opmerkingen": ""}, {"id": 48, "naam": "Partou de Runneboom", "adres": "Runneboom 4 -6", "postcode": "", "stad": "Warnsveld", "urenPerWeek": 6.0, "telefoon": "", "contactpersonen": [{"naam": "Loes Vordeman", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do", "vr"], "kleur": "#065f46", "opmerkingen": ""}, {"id": 49, "naam": "Partou de Bosmuis", "adres": "Vordenseweg 13", "postcode": "", "stad": "Warnsveld", "urenPerWeek": 3.0, "telefoon": "", "contactpersonen": [{"naam": "Patricia Lonink", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#7c3aed", "opmerkingen": "Allarmcode 2208 huisje in, 2208 huisje uit sleutelkastje 2468"}, {"id": 50, "naam": "Partou Villa 60", "adres": "Schoolstraat 60", "postcode": "", "stad": "Eefde", "urenPerWeek": 3.0, "telefoon": "", "contactpersonen": [{"naam": "Jolanda Gimberg", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["di", "do"], "kleur": "#b91c1c", "opmerkingen": ""}, {"id": 51, "naam": "Partou het Hart", "adres": "Jolinkweg 2", "postcode": "", "stad": "Eefde", "urenPerWeek": 4.0, "telefoon": "", "contactpersonen": [{"naam": "Jolanda Gimberg", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#0369a1", "opmerkingen": ""}, {"id": 52, "naam": "Partou de Boomhut", "adres": "Bargeweg 3", "postcode": "", "stad": "Eefde", "urenPerWeek": 3.0, "telefoon": "", "contactpersonen": [{"naam": "Jolanda Gimberg", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#4d7c0f", "opmerkingen": ""}, {"id": 53, "naam": "Partou de Boomhut BSO", "adres": "Bargeweg 3", "postcode": "", "stad": "Eefde", "urenPerWeek": 1.5, "telefoon": "", "contactpersonen": [{"naam": "Jolanda Gimberg", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do"], "kleur": "#6b21a8", "opmerkingen": ""}, {"id": 54, "naam": "EnMente", "adres": "Burg. Dijkckmeesterweg 12A", "postcode": "", "stad": "Zutphen", "urenPerWeek": 3.0, "telefoon": "", "contactpersonen": [{"naam": "Ynke van Zuidam", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "do"], "kleur": "#c2410c", "opmerkingen": ""}, {"id": 55, "naam": "Slachtofferhulp", "adres": "Nieuwstad 96", "postcode": "", "stad": "Zutphen", "urenPerWeek": 4.5, "telefoon": "", "contactpersonen": [{"naam": "Ingrid Stegeman", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#0f766e", "opmerkingen": ""}, {"id": 56, "naam": "Monuta Zutphen", "adres": "Piet Heijnstraat", "postcode": "", "stad": "Zutphen", "urenPerWeek": 3.75, "telefoon": "", "contactpersonen": [{"naam": "Jorijn  Egbers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "do"], "kleur": "#1d4ed8", "opmerkingen": ""}, {"id": 57, "naam": "Dela", "adres": "Nutselaer 4", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 19.0, "telefoon": "", "contactpersonen": [{"naam": "Shirley Groenen", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#15803d", "opmerkingen": ""}, {"id": 58, "naam": "Zone College", "adres": "Gezellenlaan 14", "postcode": "", "stad": "Doetinchem", "urenPerWeek": 85.0, "telefoon": "", "contactpersonen": [{"naam": "Bas Woudt (BINX)", "functie": "", "telefoon": "", "email": ""}, {"naam": "Freddy  Kuipers (ZONE)", "functie": "", "telefoon": "", "email": ""}, {"naam": "Tanja Wissing", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#7e22ce", "opmerkingen": ""}, {"id": 59, "naam": "DMG Mandemakers", "adres": "Gerritsenweg 16", "postcode": "", "stad": "Zutphen", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "NNB Wisselt regelmatig", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "do", "vr"], "kleur": "#b45309", "opmerkingen": ""}, {"id": 60, "naam": "COA Zutphen", "adres": "Voorsterallee 1", "postcode": "", "stad": "Zutphen", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "Jeroen Peeters", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#0e7490", "opmerkingen": ""}, {"id": 61, "naam": "Kuehne en Nagel", "adres": "Verhuellweg 3 en 5B en H", "postcode": "", "stad": "", "urenPerWeek": 15.0, "telefoon": "", "contactpersonen": [{"naam": "Jordy Aarnink", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#2563eb", "opmerkingen": ""}, {"id": 62, "naam": "Scania Gaanderen", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#16a34a", "opmerkingen": ""}, {"id": 63, "naam": "BMN Zutphen", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "Harjan Liefers", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#9333ea", "opmerkingen": ""}, {"id": 64, "naam": "BMN Doetinchem", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 6.0, "telefoon": "", "contactpersonen": [{"naam": "Richard Schagen", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#ea580c", "opmerkingen": ""}, {"id": 65, "naam": "Jongeneel Spankeren", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "André Kuiper", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "wo", "vr"], "kleur": "#0891b2", "opmerkingen": ""}, {"id": 66, "naam": "Pleiger Doetinchem", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "Danny Jansen", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#be185d", "opmerkingen": ""}, {"id": 67, "naam": "HMVT Rheden", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "Roel Marcus", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#d97706", "opmerkingen": ""}, {"id": 68, "naam": "Stichting Nidos Wehl", "adres": "", "postcode": "", "stad": "", "urenPerWeek": 0, "telefoon": "", "contactpersonen": [{"naam": "Petra Teunissen", "functie": "", "telefoon": "", "email": ""}], "werkdagen": ["ma", "di", "wo", "do", "vr"], "kleur": "#065f46", "opmerkingen": ""}];
+
+let medewerkers = [{"id": 1, "naam": "Kevin Sangers", "personeelsnr": "703945", "contracturen": 34.25, "invaller": "Nynke Boonman", "locatieId": 1, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 3.0u", "di 3.0u", "wo 3.0u", "do 3.0u", "vr 3.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "3.0", "notitie": ""}], "extraLocaties": [{"locatieId": 5, "diensten": ["ma 1.25u", "di 1.5u", "wo 1.25u", "do 1.5u", "vr 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.25", "notitie": ""}]}, {"locatieId": 8, "diensten": ["ma 1.75u", "di 1.75u", "wo 1.75u", "do 1.75u", "vr 1.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.75", "notitie": ""}]}, {"locatieId": 9, "diensten": ["ma 0.75u", "di 0.75u", "wo 0.75u", "do 0.75u", "vr 0.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "0.75", "notitie": ""}]}]}, {"id": 2, "naam": "Yasmin Serbetli Yildiz", "personeelsnr": "1038003", "contracturen": 12.0, "invaller": "Sheranie Rellum", "locatieId": 2, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.0u", "di 2.5u", "wo 2.0u", "do 2.5u", "vr 2.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.0", "notitie": ""}], "extraLocaties": []}, {"id": 3, "naam": "Hayet Biogradija", "personeelsnr": "1090021", "contracturen": 17.5, "invaller": "Vlinder", "locatieId": 3, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 3.5u", "di 3.5u", "wo 3.5u", "do 3.5u", "vr 3.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "3.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "3.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "3.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "3.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "3.5", "notitie": ""}], "extraLocaties": []}, {"id": 4, "naam": "Tanja Lowenthal", "personeelsnr": "6702624", "contracturen": 8.0, "invaller": "Vervangen elkaar", "locatieId": 4, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "wo 4.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "4.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 5, "naam": "Barbara ter Horst", "personeelsnr": "697462", "contracturen": 17.5, "invaller": "", "locatieId": 4, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 0.75u", "di 0.75u", "do 0.75u", "vr 0.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "0.75", "notitie": ""}], "extraLocaties": [{"locatieId": 27, "diensten": ["ma 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}, {"locatieId": 36, "diensten": ["di 1.0u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}]}, {"id": 7, "naam": "Els Elfers", "personeelsnr": "1213798", "contracturen": 8.5, "invaller": "Nynke Boonman", "locatieId": 5, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.25u", "di 1.5u", "wo 1.25u", "do 1.5u", "vr 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.25", "notitie": ""}], "extraLocaties": [{"locatieId": 35, "diensten": ["di 1.25u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.25", "notitie": ""}]}]}, {"id": 8, "naam": "Embaba Teweldebirhan", "personeelsnr": "1203439", "contracturen": 12.5, "invaller": "Kevin Sangers", "locatieId": 6, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "wo 2.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 9, "naam": "Karlijn Bosman", "personeelsnr": "1234533", "contracturen": 10.0, "invaller": "Dorota Wojcik", "locatieId": 7, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.0u", "di 2.0u", "wo 2.0u", "do 2.0u", "vr 2.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.0", "notitie": ""}], "extraLocaties": []}, {"id": 12, "naam": "Nynke Boonman", "personeelsnr": "1035350", "contracturen": 22.5, "invaller": "Kevin Sangers", "locatieId": 9, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.0u", "di 1.0u", "wo 1.0u", "do 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": [{"locatieId": 12, "diensten": ["ma 1.25u", "di 1.25u", "wo 1.25u", "do 1.25u", "vr 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.25", "notitie": ""}]}, {"locatieId": 15, "diensten": ["ma 2.0u", "di 2.0u", "wo 2.0u", "do 2.0u", "vr 2.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.0", "notitie": ""}]}, {"locatieId": 20, "diensten": ["ma 1.25u", "wo 1.25u", "vr 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.25", "notitie": ""}]}, {"locatieId": 28, "diensten": ["ma 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}, {"locatieId": 29, "diensten": ["di 1.0u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}]}, {"id": 13, "naam": "Lisandra Cabrera", "personeelsnr": "1167347", "contracturen": 7.75, "invaller": "", "locatieId": 10, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.75u", "di 1.75u", "wo 1.75u", "do 1.75u", "vr 1.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.75", "notitie": ""}], "extraLocaties": []}, {"id": 14, "naam": "Amy Buitenhuis", "personeelsnr": "1144240", "contracturen": 7.75, "invaller": "", "locatieId": 11, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.5u", "wo 1.5u", "vr 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.5", "notitie": ""}], "extraLocaties": [{"locatieId": 31, "diensten": ["wo 2.0u"], "_dienstenRaw": [{"dag": "wo", "van": "", "tot": "", "uren": "2.0", "notitie": ""}]}]}, {"id": 16, "naam": "Sheranie Rellum", "personeelsnr": "", "contracturen": 0, "invaller": "Vinder", "locatieId": 13, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.12u", "di 1.12u", "wo 1.12u", "do 1.12u", "vr 1.1u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.12", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.12", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.12", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.12", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.1", "notitie": ""}], "extraLocaties": [{"locatieId": 25, "diensten": ["ma 1.0u", "wo 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}]}, {"id": 17, "naam": "Rita Woeltjes", "personeelsnr": "", "contracturen": 0, "invaller": "Melanie Woeltjes", "locatieId": 14, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.17u", "di 1.17u", "wo 1.17u", "do 1.17u", "vr 1.17u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.17", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.17", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.17", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.17", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.17", "notitie": ""}], "extraLocaties": [{"locatieId": 64, "diensten": ["ma 2.75u", "wo 2.75u", "vr 2.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.75", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.75", "notitie": ""}]}]}, {"id": 19, "naam": "Marc Siebelink", "personeelsnr": "", "contracturen": 0, "invaller": "Nynke Boonman", "locatieId": 16, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.0u", "di 1.0u", "wo 1.0u", "do 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": [{"locatieId": 17, "diensten": [], "_dienstenRaw": []}, {"locatieId": 18, "diensten": ["ma 2.0u", "di 2.0u", "wo 2.0u", "do 2.0u", "vr 2.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.0", "notitie": ""}]}]}, {"id": 22, "naam": "Melanie Woeltjes", "personeelsnr": "", "contracturen": 0, "invaller": "Aisha Marak", "locatieId": 19, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 0.5u", "di 0.5u", "wo 0.5u", "do 0.5u", "vr 0.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "0.5", "notitie": ""}], "extraLocaties": [{"locatieId": 21, "diensten": ["ma 1.0u", "di 1.0u", "wo 1.0u", "do 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}, {"locatieId": 34, "diensten": ["di 1.5u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.5", "notitie": ""}]}]}, {"id": 25, "naam": "Aisha Marak", "personeelsnr": "1161981", "contracturen": 0, "invaller": "Melanie Woeltjes", "locatieId": 22, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 0.75u", "di 0.75u", "wo 0.75u", "do 0.75u", "vr 0.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "0.75", "notitie": ""}], "extraLocaties": [{"locatieId": 38, "diensten": ["di 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}]}, {"id": 26, "naam": "Janneke Kaak", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 23, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 0.75u", "di 0.75u", "wo 0.75u", "do 0.75u", "vr 0.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "0.75", "notitie": ""}], "extraLocaties": [{"locatieId": 24, "diensten": ["ma 1.0u", "di 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}]}, {"id": 29, "naam": "Sandra Pruis", "personeelsnr": "", "contracturen": 0, "invaller": "Vlinder", "locatieId": 26, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.0", "notitie": ""}], "extraLocaties": []}, {"id": 33, "naam": "Sonia Vet", "personeelsnr": "", "contracturen": 0, "invaller": "Elise Storteler", "locatieId": 30, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["wo 2.0u"], "_dienstenRaw": [{"dag": "wo", "van": "", "tot": "", "uren": "2.0", "notitie": ""}], "extraLocaties": []}, {"id": 35, "naam": "Patricia Boxma", "personeelsnr": "", "contracturen": 0, "invaller": "Vlinder", "locatieId": 32, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["wo 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": [{"locatieId": 33, "diensten": ["ma 1.0u", "do 0.48u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.48", "notitie": ""}]}, {"locatieId": 39, "diensten": ["di 1.25u", "do 1.25u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.25", "notitie": ""}]}]}, {"id": 36, "naam": "Sofia Keijser", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 33, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": [], "_dienstenRaw": [], "extraLocaties": []}, {"id": 41, "naam": "Zeynep Demir", "personeelsnr": "", "contracturen": 0, "invaller": "????", "locatieId": 37, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["wo 1.0u"], "_dienstenRaw": [{"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": []}, {"id": 44, "naam": "Jennifer Woeltjes", "personeelsnr": "", "contracturen": 0, "invaller": "Vervangen elkaar", "locatieId": 40, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.25u", "do 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.25", "notitie": ""}], "extraLocaties": []}, {"id": 45, "naam": "Dave", "personeelsnr": "", "contracturen": 0, "invaller": "door de week", "locatieId": 41, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.25u", "di 1.25u", "wo 1.25u", "do 1.25u", "vr 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.25", "notitie": ""}], "extraLocaties": []}, {"id": 46, "naam": "Willy van de Scheur", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 42, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["wo 0.5u", "vr 1.0u"], "_dienstenRaw": [{"dag": "wo", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": []}, {"id": 47, "naam": "Quinten", "personeelsnr": "", "contracturen": 0, "invaller": "Janne Zoetenhorst", "locatieId": 43, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 48, "naam": "Venity", "personeelsnr": "", "contracturen": 0, "invaller": "Willy van de Scheur", "locatieId": 44, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 3.0u", "di 3.0u", "do 3.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "3.0", "notitie": ""}], "extraLocaties": []}, {"id": 49, "naam": "Janne Zoetenhorst", "personeelsnr": "", "contracturen": 0, "invaller": "Fouzia Elkhaloufi", "locatieId": 45, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.5u", "di 1.5u", "do 1.5u", "vr 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.5", "notitie": ""}], "extraLocaties": []}, {"id": 50, "naam": "Janet Kroesen", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 46, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.0u", "di 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": [{"locatieId": 47, "diensten": ["ma 1.0u", "di 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}, {"locatieId": 48, "diensten": ["ma 1.5u", "di 1.5u", "do 1.5u", "vr 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.5", "notitie": ""}]}, {"locatieId": 49, "diensten": ["ma 0.75u", "di 0.75u", "do 0.75u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.75", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.75", "notitie": ""}]}]}, {"id": 54, "naam": "Ise", "personeelsnr": "", "contracturen": 0, "invaller": "S. Toering  (via JT)", "locatieId": 50, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["di 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": [{"locatieId": 51, "diensten": ["ma 1.0u", "di 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}, {"locatieId": 52, "diensten": ["ma 1.0u", "di 1.0u", "do 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}]}, {"locatieId": 53, "diensten": ["ma 0.5u", "di 0.5u", "do 0.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "0.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "0.5", "notitie": ""}]}]}, {"id": 58, "naam": "Sandra Frisart", "personeelsnr": "", "contracturen": 0, "invaller": "S. Toering  (via JT)", "locatieId": 54, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "do 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}], "extraLocaties": [{"locatieId": 55, "diensten": ["ma 1.5u", "wo 1.5u", "vr 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.5", "notitie": ""}]}]}, {"id": 60, "naam": "Leeroy", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 56, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.5u", "do 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}], "extraLocaties": []}, {"id": 61, "naam": "Jennifer", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 57, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": [], "_dienstenRaw": [], "extraLocaties": []}, {"id": 62, "naam": "Alvera Rijkse (VD)", "personeelsnr": "", "contracturen": 0, "invaller": "20", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 4.0u", "di 4.0u", "wo 4.0u", "do 4.0u", "vr 4.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "4.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "4.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "4.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "4.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "4.0", "notitie": ""}], "extraLocaties": []}, {"id": 63, "naam": "Eneroliza", "personeelsnr": "", "contracturen": 0, "invaller": "12.5", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "wo 2.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 64, "naam": "Marc", "personeelsnr": "", "contracturen": 0, "invaller": "12.5", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": [], "_dienstenRaw": [], "extraLocaties": []}, {"id": 65, "naam": "Fadime Cavlun", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 3.0u", "di 3.0u", "wo 3.0u", "do 3.0u", "vr 3.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "3.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "3.0", "notitie": ""}], "extraLocaties": []}, {"id": 66, "naam": "Karlijn", "personeelsnr": "", "contracturen": 0, "invaller": "10.5", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "wo 2.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 67, "naam": "Najia", "personeelsnr": "", "contracturen": 0, "invaller": "12.5", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "wo 2.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 68, "naam": "Ingrid Vos", "personeelsnr": "", "contracturen": 0, "invaller": "12.5", "locatieId": 58, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 2.5u", "di 2.5u", "wo 2.5u", "do 2.5u", "vr 2.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "2.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "2.5", "notitie": ""}], "extraLocaties": []}, {"id": 69, "naam": "Helma Klein Obbink", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 59, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 3.25u", "di 3.25u", "do 3.25u", "vr 3.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "3.25", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "3.25", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "3.25", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "3.25", "notitie": ""}], "extraLocaties": []}, {"id": 70, "naam": "Nuran Bozdag", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 60, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 5.0u", "di 5.0u", "wo 5.0u", "do 5.0u", "vr 5.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "5.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "5.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "5.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "5.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "5.0", "notitie": ""}], "extraLocaties": []}, {"id": 71, "naam": "Shruti Thakoerdin", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 61, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.5u", "di 1.5u", "wo 1.5u", "do 1.5u", "vr 1.5u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.5", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.5", "notitie": ""}], "extraLocaties": []}, {"id": 72, "naam": "Marianne Bokkerts", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 62, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": [], "_dienstenRaw": [], "extraLocaties": []}, {"id": 73, "naam": "Larissa Boogaart", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 63, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.0u", "wo 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": [{"locatieId": 66, "diensten": [], "_dienstenRaw": []}, {"locatieId": 66, "diensten": ["ma 1.25u", "vr 1.25u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.25", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.25", "notitie": ""}]}]}, {"id": 77, "naam": "Melanie", "personeelsnr": "", "contracturen": 0, "invaller": "", "locatieId": 68, "functie": "Schoonmaakmedewerker", "telefoon": "", "email": "", "beschikbaar": true, "diensten": ["ma 1.0u", "di 1.0u", "wo 1.0u", "do 1.0u", "vr 1.0u"], "_dienstenRaw": [{"dag": "ma", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "di", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "wo", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "do", "van": "", "tot": "", "uren": "1.0", "notitie": ""}, {"dag": "vr", "van": "", "tot": "", "uren": "1.0", "notitie": ""}], "extraLocaties": []}];
+let afwezigen = [];
+let selectedMwId = null; // for dashboard search
+let rayonWeergave = 'tabel';
+let nieuweLocatieDagen = [];
+let activLocatieId = null;
+let activMwId = null;
+let locatieBewerkModus = false;
+let mwDiensten = []; // diensten being edited
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function fmt(n) { return (n||0).toFixed(2).replace('.',','); }
+function fmtShort(n) { return (n||0).toFixed(1).replace('.',','); }
+
+function getWeekLabel() {
+  const now = new Date();
+  const start = new Date(now); start.setDate(now.getDate() - now.getDay() + 1);
+  const end = new Date(start); end.setDate(start.getDate() + 4);
+  return `Week: ${start.getDate()} – ${end.getDate()} ${end.toLocaleString('nl-NL',{month:'long'})} ${end.getFullYear()}`;
+}
+
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.style.background = type==='success' ? '#1a7f5a' : '#2563eb';
+  el.textContent = (type==='success'?'✓ ':'ℹ ') + msg;
+  el.style.display = 'block';
+  setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+function locatieVan(id) { return locaties.find(l=>l.id===id) || {}; }
+function medewerkerVan(id) { return medewerkers.find(m=>m.id===id); }
+
+function berekenUren(van, tot) {
+  if (!van||!tot) return 0;
+  const [h1,m1]=van.split(':').map(Number), [h2,m2]=tot.split(':').map(Number);
+  const min=(h2*60+m2)-(h1*60+m1);
+  return min>0 ? min/60 : 0;
+}
+
+function totaalUrenMw(mw) {
+  if (!mw._dienstenRaw||!mw._dienstenRaw.length) return 0;
+  return mw._dienstenRaw.reduce((s,d)=>s+(parseFloat(d.uren)||berekenUren(d.van,d.tot)),0);
+}
+
+function dagTagsHtml(dagen, kleur) {
+  return dagen.map(d=>`<span class="dag-tag" style="background:${kleur}18;color:${kleur}">${d}</span>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════
+function setTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name==='dashboard') renderDashboard();
+  if (name==='rayonboek') renderRayon();
+  if (name==='medewerkers') renderMedewerkers();
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function zoekMedewerker(q) {
+  const dd = document.getElementById('zoekDropdown');
+  if (q.length < 2) { dd.style.display='none'; return; }
+  const res = medewerkers.filter(m=>m.naam.toLowerCase().includes(q.toLowerCase()) && !afwezigen.find(a=>a.medewerkerId===m.id));
+  if (!res.length) { dd.style.display='none'; return; }
+  dd.innerHTML = res.map(m=>{
+    const loc=locatieVan(m.locatieId);
+    return `<div class="search-dropdown-item" onclick="selecteerMw(${m.id},'${m.naam.replace(/'/g,"\\'")}')">
+      <div style="font-weight:600;font-size:13px">${m.naam}</div>
+      <div style="font-size:11px;color:#94a3b8">${m.functie} · ${loc.naam||''}</div>
+    </div>`;
+  }).join('');
+  dd.style.display='block';
+}
+
+function selecteerMw(id, naam) {
+  selectedMwId = id;
+  document.getElementById('zoekInput').value = naam;
+  document.getElementById('zoekDropdown').style.display='none';
+}
+
+function voegAfwezigeToe() {
+  if (!selectedMwId) { toast('Selecteer eerst een medewerker','info'); return; }
+  const mw = medewerkerVan(selectedMwId);
+  if (!mw) return;
+  const reden = document.getElementById('redenSelect').value;
+  const datumVan = document.getElementById('datumVan').value;
+  const datumTot = document.getElementById('datumTot').value;
+  afwezigen.push({ id: Date.now(), medewerkerId: mw.id, naam: mw.naam, locatieId: mw.locatieId,
+    functie: mw.functie, diensten: [...(mw.diensten||[])], reden, vervangers: {},
+    datumVan: datumVan || '', datumTot: datumTot || '' });
+  selectedMwId = null;
+  document.getElementById('zoekInput').value='';
+  document.getElementById('datumVan').value='';
+  document.getElementById('datumTot').value='';
+  toast(`${mw.naam} toegevoegd aan het rooster`);
+  renderDashboard();
+}
+
+function verwijderAfwezige(id) {
+  afwezigen = afwezigen.filter(a=>a.id!==id);
+  toast('Verwijderd uit rooster','info');
+  renderDashboard();
+}
+
+function stelVervangerIn(afwezigeId, dienst, vervangerId) {
+  const a = afwezigen.find(x=>x.id===afwezigeId);
+  if (!a) return;
+  if (vervangerId) a.vervangers[dienst]=parseInt(vervangerId);
+  else delete a.vervangers[dienst];
+  renderDashboard();
+}
+
+function bewerkDatum(id) {
+  // Close any other open date editors first
+  document.querySelectorAll('[id^="datumEdit_"]').forEach(el => el.style.display = 'none');
+  const el = document.getElementById('datumEdit_' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function sluitDatumEdit(id) {
+  const el = document.getElementById('datumEdit_' + id);
+  if (el) el.style.display = 'none';
+}
+
+function slaDataumOp(id) {
+  const a = afwezigen.find(x => x.id === id);
+  if (!a) return;
+  const vanEl = document.getElementById('editDatumVan_' + id);
+  const totEl = document.getElementById('editDatumTot_' + id);
+  a.datumVan = vanEl ? vanEl.value : '';
+  a.datumTot = totEl ? totEl.value : '';
+  toast('Datum opgeslagen');
+  renderDashboard();
+}
+
+function toggleDienstUitsluiten(afwezigeId, dienst) {
+  const a = afwezigen.find(x=>x.id===afwezigeId);
+  if (!a) return;
+  if (!a.uitgesloten) a.uitgesloten = [];
+  if (a.uitgesloten.includes(dienst)) {
+    a.uitgesloten = a.uitgesloten.filter(d=>d!==dienst);
+  } else {
+    a.uitgesloten.push(dienst);
+    delete a.vervangers[dienst]; // clear vervanger when excluding
+  }
+  renderDashboard();
+}
+
+function renderDashboard() {
+  // Stats — only count active (non-excluded) diensten
+  const openDiensten = afwezigen.reduce((s,a)=>s+a.diensten.filter(d=>!(a.uitgesloten||[]).includes(d)&&!a.vervangers[d]).length,0);
+  const ingevuldDiensten = afwezigen.reduce((s,a)=>s+a.diensten.filter(d=>!(a.uitgesloten||[]).includes(d)&&a.vervangers[d]).length,0);
+  const actieveLocs = new Set(afwezigen.map(a=>a.locatieId)).size;
+  document.getElementById('dashStats').innerHTML = [
+    {lbl:'Afwezig',val:afwezigen.length,kleur:'#ef4444',icon:'👤'},
+    {lbl:'Open diensten',val:openDiensten,kleur:'#f59e0b',icon:'⚠️'},
+    {lbl:'Ingevuld',val:ingevuldDiensten,kleur:'#10b981',icon:'✓'},
+    {lbl:'Locaties actief',val:actieveLocs,kleur:'#3b82f6',icon:'🏢'},
+  ].map(s=>`<div class="card stat-card" style="border-left-color:${s.kleur}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div class="stat-num" style="color:${s.kleur}">${s.val}</div><div class="stat-lbl">${s.lbl}</div></div>
+      <span style="font-size:24px">${s.icon}</span>
+    </div></div>`).join('');
+
+  // Empty state
+  const empty = document.getElementById('dashEmpty');
+  if (medewerkers.length===0) { empty.style.display='block'; empty.textContent='Voeg eerst medewerkers toe via het tabblad Medewerkers.'; }
+  else if (afwezigen.length===0) { empty.style.display='block'; empty.textContent='Nog geen afwezigen deze week.'; }
+  else { empty.style.display='none'; }
+
+  // Afwezigenlijst
+  const list = document.getElementById('afwezigenList');
+  if (!afwezigen.length) { list.innerHTML=''; return; }
+
+  list.innerHTML = [...afwezigen].sort((a,b)=>{
+    // Sort: entries with a date first (chronological), then undated
+    if (a.datumVan && b.datumVan) return a.datumVan.localeCompare(b.datumVan);
+    if (a.datumVan) return -1;
+    if (b.datumVan) return 1;
+    return 0;
+  }).map(a=>{
+    const loc = locatieVan(a.locatieId);
+    const uitgesloten = a.uitgesloten || [];
+    const activeDiensten = a.diensten.filter(d => !uitgesloten.includes(d));
+    const totaal = activeDiensten.length;
+    const ingevuld = activeDiensten.filter(d=>a.vervangers[d]).length;
+    const pct = totaal>0 ? Math.round(ingevuld/totaal*100) : 100;
+    const barColor = pct===100?'#10b981':pct>0?'#f59e0b':'#ef4444';
+    const badgeClass = pct===100?'badge-green':pct>0?'badge-yellow':'badge-red';
+
+    // Build vervanger options — vaste invallers van deze medewerker bovenaan
+    const afwezigeMw = medewerkerVan(a.medewerkerId) || {};
+    const vasteInvallerNamen = (afwezigeMw.invallers && afwezigeMw.invallers.length)
+      ? afwezigeMw.invallers.map(i=>i.naam.toLowerCase())
+      : (afwezigeMw.invaller && !['????','Vlinder','Vervangen elkaar','Collega van Zone','door de week',''].includes(afwezigeMw.invaller.trim()))
+        ? [afwezigeMw.invaller.toLowerCase()] : [];
+
+    const beschikbaar = medewerkers.filter(m=>
+      m.id!==a.medewerkerId &&
+      !afwezigen.find(x=>x.medewerkerId===m.id) &&
+      m.beschikbaar !== false
+    );
+    // Split: vaste invallers first, then rest
+    const vasteInvallers = beschikbaar.filter(m=>vasteInvallerNamen.includes(m.naam.toLowerCase()));
+    const andereInvallers = beschikbaar.filter(m=>!vasteInvallerNamen.includes(m.naam.toLowerCase()));
+
+    // Badge tonen welke vaste invallers er zijn
+    const invallerBadges = vasteInvallerNamen.length
+      ? vasteInvallerNamen.map(n=>`<span style="padding:2px 8px;border-radius:10px;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:600">🔄 ${n}</span>`).join(' ')
+      : '';
+
+    const dienstenHtml = a.diensten.length===0
+      ? '<div style="font-size:13px;color:#94a3b8;font-style:italic">Geen vaste diensten gekoppeld</div>'
+      : a.diensten.map(dienst=>{
+          const dag = dienst.split(' ')[0];
+          const tijd = dienst.split(' ').slice(1).join(' ');
+          const isUitgesloten = uitgesloten.includes(dienst);
+          const huidig = a.vervangers[dienst]||'';
+          const ok = !!huidig && !isUitgesloten;
+          const vasteOpts = vasteInvallers.length
+            ? `<optgroup label="⭐ Vaste invallers">${vasteInvallers.map(m=>`<option value="${m.id}" ${huidig==m.id?'selected':''}>${m.naam}</option>`).join('')}</optgroup>`
+            : '';
+          const andereOpts = andereInvallers.length
+            ? `<optgroup label="Overige medewerkers">${andereInvallers.map(m=>`<option value="${m.id}" ${huidig==m.id?'selected':''}>${m.naam}</option>`).join('')}</optgroup>`
+            : '';
+
+          if (isUitgesloten) {
+            return `<div class="dienst-inline" style="background:#f8fafc;border-color:#e2e8f0;opacity:0.6">
+              <div style="min-width:90px">
+                <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;text-decoration:line-through">${DAGEN_LANG[dag]||dag}</span>
+                ${tijd?`<div style="font-size:12px;color:#94a3b8;text-decoration:line-through">${tijd}</div>`:''}
+              </div>
+              <div style="flex:1;font-size:12px;color:#94a3b8;font-style:italic">Geen vervanging nodig</div>
+              <button onclick="toggleDienstUitsluiten(${a.id},'${dienst}')" title="Vervanging weer inschakelen" style="flex-shrink:0;padding:5px 10px;border-radius:7px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap">↩ Herstellen</button>
+            </div>`;
+          }
+
+          return `<div class="dienst-inline" style="background:${ok?'#f0fdf4':'#fefce8'};border-color:${ok?'#bbf7d0':'#fde68a'}">
+            <div style="min-width:90px"><span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase">${DAGEN_LANG[dag]||dag}</span>
+            ${tijd?`<div style="font-size:12px;color:#64748b">${tijd}</div>`:''}
+            </div>
+            <div style="flex:1">
+              <select onchange="stelVervangerIn(${a.id},'${dienst}',this.value)" style="border-color:${ok?'#86efac':'#fcd34d'};font-weight:${ok?700:400};color:${ok?'#166534':'#6b7280'}">
+                <option value="">— Selecteer vervanger —</option>${vasteOpts}${andereOpts}
+              </select>
+            </div>
+            <button onclick="toggleDienstUitsluiten(${a.id},'${dienst}')" title="Geen vervanging nodig voor deze dag" style="flex-shrink:0;width:30px;height:34px;border-radius:7px;border:1.5px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;font-size:14px;line-height:1" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#fff';this.style.color='#94a3b8';this.style.borderColor='#e2e8f0'">✕</button>
+            <span style="font-size:18px">${ok?'✅':'⚠️'}</span>
+          </div>`;
+        }).join('');
+
+    // Format datum for display
+    const fmtDatum = d => {
+      if (!d) return '';
+      const [y,m,day] = d.split('-');
+      return `${day}-${m}-${y}`;
+    };
+    const datumBadge = a.datumVan
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;background:#f0f9ff;color:#0369a1;font-size:11px;font-weight:600;border:1px solid #bae6fd">
+          📅 ${fmtDatum(a.datumVan)}${a.datumTot && a.datumTot!==a.datumVan ? ' t/m '+fmtDatum(a.datumTot) : ''}
+          <button onclick="bewerkDatum(${a.id})" title="Datum aanpassen" style="border:none;background:none;cursor:pointer;color:#0369a1;font-size:11px;padding:0 2px;line-height:1">✎</button>
+        </span>`
+      : `<button onclick="bewerkDatum(${a.id})" style="padding:3px 9px;border-radius:10px;background:#f8fafc;border:1px dashed #cbd5e1;color:#94a3b8;font-size:11px;cursor:pointer;font-weight:500">+ datum</button>`;
+
+    return `<div class="afwezige-card" style="border-top:3px solid ${loc.kleur||'#3b82f6'}">
+      <div style="padding:22px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+          <div class="flex gap-12" style="align-items:center">
+            <div style="width:44px;height:44px;border-radius:12px;background:${loc.kleur||'#3b82f6'}20;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:${loc.kleur||'#3b82f6'}">${a.naam.charAt(0)}</div>
+            <div>
+              <div style="font-weight:700;font-size:15px">${a.naam}</div>
+              <div style="font-size:12px;color:#64748b">${a.functie} · <span style="color:${loc.kleur||'#3b82f6'};font-weight:600">${loc.naam||''}</span></div>
+              ${invallerBadges?`<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">${invallerBadges}</div>`:''}
+            </div>
+          </div>
+          <div class="flex gap-8" style="align-items:center;flex-wrap:wrap;justify-content:flex-end">
+            ${datumBadge}
+            <span class="badge badge-yellow">${a.reden}</span>
+            <span class="badge ${badgeClass}">${ingevuld}/${totaal} ingevuld</span>
+            <button class="btn btn-danger" onclick="verwijderAfwezige(${a.id})">✕</button>
+          </div>
+        </div>
+        <div id="datumEdit_${a.id}" style="display:none;margin-bottom:12px;padding:12px 14px;background:#f0f9ff;border-radius:10px;border:1px solid #bae6fd">
+          <div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:8px">PERIODE AANPASSEN</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:3px">VAN</label>
+              <input type="date" id="editDatumVan_${a.id}" value="${a.datumVan||''}" style="font-size:12px;padding:7px 9px">
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:3px">TOT EN MET</label>
+              <input type="date" id="editDatumTot_${a.id}" value="${a.datumTot||''}" style="font-size:12px;padding:7px 9px">
+            </div>
+            <div style="display:flex;gap:6px">
+              <button onclick="slaDataumOp(${a.id})" style="padding:7px 12px;border-radius:7px;border:none;background:#0369a1;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✓</button>
+              <button onclick="sluitDatumEdit(${a.id})" style="padding:7px 10px;border-radius:7px;border:1.5px solid #e2e8f0;background:#fff;font-size:12px;cursor:pointer;color:#475569">✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="progress-wrap" style="margin-bottom:16px">
+          <div class="progress-bar" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+        ${dienstenHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// RAYONBOEK
+// ═══════════════════════════════════════════════════════
+function toggleRayonWeergave() {
+  rayonWeergave = rayonWeergave==='tabel' ? 'kaart' : 'tabel';
+  document.getElementById('weergaveBtn').textContent = rayonWeergave==='tabel' ? '⬛ Kaartweergave' : '☰ Tabelweergave';
+  renderRayon();
+}
+
+function toggleNieuweLocatie() {
+  const f = document.getElementById('nieuweLocatieForm');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+  if (f.style.display==='block') buildNlDagButtons();
+}
+
+function buildNlDagButtons() {
+  nieuweLocatieDagen = ['ma','di','wo','do','vr'];
+  document.getElementById('nl_dagButtons').innerHTML = DAGEN.map(d=>
+    `<button class="btn" style="padding:6px 13px;border-radius:18px;border:2px solid #2563eb;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:600" onclick="toggleNlDag('${d}',this)">${DAGEN_LANG[d]}</button>`
+  ).join('');
+}
+
+function toggleNlDag(dag, btn) {
+  if (nieuweLocatieDagen.includes(dag)) {
+    nieuweLocatieDagen = nieuweLocatieDagen.filter(d=>d!==dag);
+    btn.style.background='#fff'; btn.style.color='#94a3b8'; btn.style.borderColor='#e2e8f0';
+  } else {
+    nieuweLocatieDagen.push(dag);
+    btn.style.background='#eff6ff'; btn.style.color='#2563eb'; btn.style.borderColor='#2563eb';
+  }
+}
+
+function slaLocatieOp() {
+  const naam = document.getElementById('nl_naam').value.trim();
+  if (!naam) { toast('Vul een naam in','info'); return; }
+  locaties.push({
+    id: Date.now(), naam,
+    adres: document.getElementById('nl_adres').value,
+    postcode: document.getElementById('nl_postcode').value,
+    stad: document.getElementById('nl_stad').value,
+    telefoon: document.getElementById('nl_telefoon').value,
+    urenPerWeek: parseFloat(document.getElementById('nl_uren').value)||0,
+    kleur: document.getElementById('nl_kleur').value,
+    werkdagen: [...nieuweLocatieDagen],
+    contactpersonen: [],
+  });
+  toggleNieuweLocatie();
+  toast('Locatie toegevoegd');
+  renderRayon();
+  updateMwLocFilter();
+}
+
+function renderRayon() {
+  const zoek = (document.getElementById('rayonZoek')||{}).value||'';
+  const sort = (document.getElementById('rayonSort')||{}).value||'uren';
+  const totalUren = locaties.reduce((s,l)=>s+(l.urenPerWeek||0),0);
+  const maxUren = Math.max(...locaties.map(l=>l.urenPerWeek||0),1);
+  const grootst = locaties.reduce((m,l)=>(l.urenPerWeek||0)>(m.urenPerWeek||0)?l:m, locaties[0]);
+
+  document.getElementById('rayonSubtitle').textContent = `${locaties.length} locaties · ${fmt(totalUren)} uur/week totaal`;
+
+  // Stats
+  document.getElementById('rayonStats').innerHTML = [
+    {lbl:'Totaal locaties',val:locaties.length,icon:'🏢'},
+    {lbl:'Totaal uur/week',val:fmt(totalUren),icon:'⏱'},
+    {lbl:'Grootste object',val:(grootst?.naam||'').split(' ').slice(0,2).join(' '),icon:'⭐'},
+    {lbl:'Gem. uur/locatie',val:fmtShort(totalUren/locaties.length),icon:'📊'},
+  ].map(s=>`<div class="card card-pad flex gap-12" style="align-items:center">
+    <span style="font-size:22px">${s.icon}</span>
+    <div><div style="font-weight:700;font-size:15px">${s.val}</div><div style="font-size:11px;color:#64748b;font-weight:500">${s.lbl}</div></div>
+  </div>`).join('');
+
+  let gefilterd = locaties.filter(l=> !zoek || l.naam.toLowerCase().includes(zoek.toLowerCase()) || l.stad.toLowerCase().includes(zoek.toLowerCase()));
+  gefilterd.sort((a,b)=>{
+    if(sort==='uren') return (b.urenPerWeek||0)-(a.urenPerWeek||0);
+    if(sort==='naam') return a.naam.localeCompare(b.naam);
+    if(sort==='stad') return a.stad.localeCompare(b.stad);
+    return 0;
+  });
+
+  const container = document.getElementById('rayonContent');
+
+  if (rayonWeergave==='tabel') {
+    const rows = gefilterd.map((loc,i)=>{
+      const mwCount = medewerkers.filter(m=>m.locatieId===loc.id).length;
+      const pct = Math.round((loc.urenPerWeek||0)/maxUren*100);
+      return `<tr onclick="openLocatieModal(${loc.id})" style="cursor:pointer">
+        <td style="color:#94a3b8;font-weight:600;font-size:12px">${i+1}</td>
+        <td><div class="flex gap-8" style="align-items:center">
+          <div style="width:10px;height:10px;border-radius:50%;background:${loc.kleur};flex-shrink:0"></div>
+          <span style="font-weight:600">${loc.naam}</span></div></td>
+        <td style="color:#64748b">${loc.adres||'—'}</td>
+        <td><span class="badge" style="background:#f1f5f9;color:#475569">${loc.stad||'—'}</span></td>
+        <td style="color:#64748b">${loc.contactpersonen?.length?loc.contactpersonen[0].naam:'—'}</td>
+        <td>${dagTagsHtml(loc.werkdagen,loc.kleur)}</td>
+        <td style="min-width:130px">
+          <div class="flex gap-8" style="align-items:center">
+            <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${pct}%;background:${loc.kleur}"></div></div>
+            <span style="font-weight:700;min-width:38px;text-align:right">${fmt(loc.urenPerWeek)}</span>
+          </div></td>
+        <td style="color:#94a3b8;font-size:11px">${mwCount?mwCount+' mw.':''}</td>
+      </tr>`;
+    }).join('');
+    const totF = gefilterd.reduce((s,l)=>s+(l.urenPerWeek||0),0);
+    container.innerHTML = `<div class="card" style="overflow:hidden">
+      <table><thead><tr><th>#</th><th>Locatie</th><th>Adres</th><th>Stad</th><th>Contactpersoon</th><th>Werkdagen</th><th>Uren/week</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="6" style="padding:11px 16px;font-size:11px;color:#475569">TOTAAL (${gefilterd.length} locaties)</td>
+      <td style="padding:11px 16px;font-size:14px;color:#1a2332">${fmt(totF)} uur</td><td></td></tr></tfoot>
+      </table></div>`;
+  } else {
+    container.innerHTML = `<div class="kaart-grid">${gefilterd.map(loc=>{
+      const pct=Math.round((loc.urenPerWeek||0)/maxUren*100);
+      const cp=loc.contactpersonen?.length?loc.contactpersonen[0].naam:'';
+      return `<div class="card" style="padding:20px;border-left:5px solid ${loc.kleur};cursor:pointer" onclick="openLocatieModal(${loc.id})">
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px">${loc.naam}</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:10px">${[loc.adres,loc.postcode,loc.stad].filter(Boolean).join(' · ')}</div>
+        <div style="margin-bottom:8px">${dagTagsHtml(loc.werkdagen,loc.kleur)}</div>
+        <div class="progress-wrap" style="margin-bottom:6px"><div class="progress-bar" style="width:${pct}%;background:${loc.kleur}"></div></div>
+        <div class="flex" style="justify-content:space-between;font-size:12px">
+          <span style="font-weight:700">⏱ ${fmt(loc.urenPerWeek)} uur/week</span>
+        </div>
+        ${cp?`<div style="font-size:11px;color:#94a3b8;margin-top:4px">👤 ${cp}</div>`:''}
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LOCATIE MODAL
+// ═══════════════════════════════════════════════════════
+function openLocatieModal(id) {
+  activLocatieId = id;
+  locatieBewerkModus = false;
+  renderLocatieModal();
+  document.getElementById('locatieModal').style.display='flex';
+}
+
+function sluitLocatieModal() {
+  document.getElementById('locatieModal').style.display='none';
+  activLocatieId = null;
+}
+
+function toggleLocatieBewerk() {
+  locatieBewerkModus = !locatieBewerkModus;
+  document.getElementById('lm_bewerkBtn').textContent = locatieBewerkModus ? '↩ Annuleren' : '✏️ Bewerken';
+  document.getElementById('lm_bewerkBtn').style.background = locatieBewerkModus ? '#eff6ff' : '#fff';
+  document.getElementById('lm_bewerkBtn').style.color = locatieBewerkModus ? '#2563eb' : '#475569';
+  renderLocatieModalBody();
+}
+
+function renderLocatieModal() {
+  const loc = locatieVan(activLocatieId);
+  document.getElementById('lm_icon').style.background = loc.kleur+'20';
+  document.getElementById('lm_naam').textContent = loc.naam;
+  document.getElementById('lm_stad').textContent = loc.stad;
+  renderLocatieModalBody();
+}
+
+function renderLocatieModalBody() {
+  const loc = locatieVan(activLocatieId);
+  const mws = medewerkers.filter(m=>m.locatieId===loc.id);
+  const contacten = loc.contactpersonen || [];
+  const body = document.getElementById('locatieModalBody');
+
+  if (!locatieBewerkModus) {
+    // VIEW
+    const infoItems = [
+      ['📍 Adres',[loc.adres,loc.postcode,loc.stad].filter(Boolean).join(', ')],
+      ['⏱ Uren/week',`${fmt(loc.urenPerWeek)} uur`],
+      ...(loc.telefoon?[['📞 Telefoon',loc.telefoon]]:[]),
+    ];
+    const cpHtml = contacten.length ? contacten.map(c=>`
+      <div class="contact-card"><div class="contact-view">
+        <div><div style="font-size:10px;font-weight:700;color:#94a3b8">NAAM</div><div style="font-size:13px;font-weight:600">${c.naam||'—'}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:#94a3b8">FUNCTIE</div><div style="font-size:13px">${c.functie||'—'}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:#94a3b8">TELEFOON</div><div style="font-size:13px">${c.telefoon||'—'}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:#94a3b8">E-MAIL</div><div style="font-size:13px">${c.email||'—'}</div></div>
+      </div></div>`).join('') : '<div style="color:#94a3b8;font-size:13px;font-style:italic">Nog geen contactpersonen</div>';
+
+    const mwHtml = mws.map(m=>`<div class="flex gap-8" style="align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-radius:10px">
+      <div class="flex gap-8" style="align-items:center">
+        <div style="width:30px;height:30px;border-radius:8px;background:${loc.kleur}25;display:flex;align-items:center;justify-content:center;font-weight:700;color:${loc.kleur};font-size:13px">${m.naam.charAt(0)}</div>
+        <div><div style="font-weight:600;font-size:13px">${m.naam}</div><div style="font-size:11px;color:#94a3b8">${m.functie}</div></div>
+      </div>
+      <div style="font-size:12px;color:#64748b">${m.telefoon||''}</div>
+    </div>`).join('');
+
+    body.innerHTML = `
+      <div>
+        <div class="modal-section-title">LOCATIEGEGEVENS</div>
+        <div class="grid-2">${infoItems.map(([l,v])=>`<div style="padding:11px 14px;background:#f8fafc;border-radius:10px">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:3px">${l}</div>
+          <div style="font-size:13px;font-weight:600">${v||'—'}</div></div>`).join('')}
+          <div style="padding:11px 14px;background:#f8fafc;border-radius:10px">
+            <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:5px">📅 WERKDAGEN</div>
+            <div>${dagTagsHtml(loc.werkdagen,loc.kleur)}</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="modal-section-title">CONTACTPERSONEN (${contacten.length})</div>
+        <div class="flex-col gap-8">${cpHtml}</div>
+      </div>
+      ${mws.length?`<div>
+        <div class="modal-section-title">MEDEWERKERS (${mws.length})</div>
+        <div class="flex-col gap-8">${mwHtml}</div>
+      </div>`:''}`;
+  } else {
+    // EDIT
+    const dagBtnsHtml = DAGEN.map(d=>{
+      const act = loc.werkdagen.includes(d);
+      return `<button id="lm_dag_${d}" class="btn" style="padding:6px 13px;border-radius:18px;border:2px solid ${act?'#2563eb':'#e2e8f0'};background:${act?'#eff6ff':'#fff'};color:${act?'#2563eb':'#94a3b8'};font-size:12px;font-weight:600" onclick="toggleLocatieDag('${d}')">${DAGEN_LANG[d]}</button>`;
+    }).join('');
+
+    const contactHtml = (loc.contactpersonen||[]).map((c,i)=>`
+      <div class="contact-card contact-edit">
+        <div class="flex" style="justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8">CONTACT ${i+1}</span>
+          <button class="btn btn-danger btn-sm" onclick="verwijderContact(${i})">Verwijderen</button>
+        </div>
+        <div class="grid-2 gap-8">
+          <div><label class="field-label" style="font-size:10px">NAAM</label><input id="lc_naam_${i}" value="${c.naam||''}" placeholder="Naam"></div>
+          <div><label class="field-label" style="font-size:10px">FUNCTIE</label><input id="lc_functie_${i}" value="${c.functie||''}" placeholder="Functie / rol"></div>
+          <div><label class="field-label" style="font-size:10px">TELEFOON</label><input id="lc_telefoon_${i}" value="${c.telefoon||''}" placeholder="Telefoon"></div>
+          <div><label class="field-label" style="font-size:10px">E-MAIL</label><input id="lc_email_${i}" value="${c.email||''}" placeholder="E-mail"></div>
+        </div>
+      </div>`).join('');
+
+    body.innerHTML = `
+      <div>
+        <div class="modal-section-title">LOCATIEGEGEVENS</div>
+        <div class="grid-2 mb-12">
+          ${['naam','adres','postcode','stad','telefoon'].map(k=>`<div><label class="field-label">${k.toUpperCase()}</label><input id="lm_${k}" value="${(loc[k]||'').replace(/"/g,'&quot;')}" placeholder="${k}"></div>`).join('')}
+          <div style="grid-column:1/-1"><label class="field-label">OPMERKINGEN / TOEGANGSCODES</label><input id="lm_opmerkingen" value="${(loc.opmerkingen||'').replace(/"/g,'&quot;')}" placeholder="bv. alarmcode, sleutelkastje..."></div>
+          <div><label class="field-label">UREN / WEEK</label><input id="lm_uren" type="number" step="0.25" value="${loc.urenPerWeek||''}"></div>
+        </div>
+        <div class="mb-12"><label class="field-label">WERKDAGEN</label><div class="flex gap-8">${dagBtnsHtml}</div></div>
+      </div>
+      <div>
+        <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #f1f5f9">
+          <span style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:1px">CONTACTPERSONEN (${(loc.contactpersonen||[]).length})</span>
+          <button class="btn btn-secondary btn-sm" onclick="voegContactToe()">+ Toevoegen</button>
+        </div>
+        <div class="flex-col gap-8" id="contactenContainer">${contactHtml}</div>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-primary" style="flex:1" onclick="slaLocatieWijzigingenOp()">✓ Wijzigingen opslaan</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="toggleLocatieBewerk()">Annuleren</button>
+      </div>`;
+  }
+}
+
+function verwijderLocatie() {
+  const loc = locatieVan(activLocatieId);
+  if (!loc.naam) return;
+  const gekoppeldeMw = medewerkers.filter(m => m.locatieId === activLocatieId || (m.extraLocaties||[]).some(e=>e.locatieId===activLocatieId));
+  let bevestig = `Weet je zeker dat je "${loc.naam}" wilt verwijderen?`;
+  if (gekoppeldeMw.length) bevestig += `\n\nLet op: ${gekoppeldeMw.length} medewerker(s) zijn aan deze locatie gekoppeld. Hun locatiekoppeling blijft bestaan maar deze locatie verdwijnt uit het rayonboek.`;
+  if (!confirm(bevestig)) return;
+  locaties = locaties.filter(l => l.id !== activLocatieId);
+  sluitLocatieModal();
+  toast(`"${loc.naam}" verwijderd`, 'info');
+  renderRayon();
+  updateMwLocFilter();
+}
+
+function toggleLocatieDag(dag) {
+  if (loc.werkdagen.includes(dag)) {
+    loc.werkdagen = loc.werkdagen.filter(d=>d!==dag);
+    btn.style.background='#fff'; btn.style.color='#94a3b8'; btn.style.borderColor='#e2e8f0';
+  } else {
+    loc.werkdagen.push(dag);
+    btn.style.background='#eff6ff'; btn.style.color='#2563eb'; btn.style.borderColor='#2563eb';
+  }
+}
+
+function voegContactToe() {
+  const loc = locatieVan(activLocatieId);
+  if (!loc.contactpersonen) loc.contactpersonen = [];
+  loc.contactpersonen.push({naam:'',functie:'',telefoon:'',email:''});
+  renderLocatieModalBody();
+}
+
+function verwijderContact(idx) {
+  const loc = locatieVan(activLocatieId);
+  loc.contactpersonen.splice(idx,1);
+  renderLocatieModalBody();
+}
+
+function slaLocatieWijzigingenOp() {
+  const loc = locatieVan(activLocatieId);
+  ['naam','adres','postcode','stad','telefoon','opmerkingen'].forEach(k=>{
+    const el=document.getElementById('lm_'+k); if(el) loc[k]=el.value;
+  });
+  const urenEl=document.getElementById('lm_uren'); if(urenEl) loc.urenPerWeek=parseFloat(urenEl.value)||0;
+  // contacten
+  (loc.contactpersonen||[]).forEach((c,i)=>{
+    ['naam','functie','telefoon','email'].forEach(k=>{
+      const el=document.getElementById(`lc_${k}_${i}`); if(el) c[k]=el.value;
+    });
+  });
+  locatieBewerkModus=false;
+  document.getElementById('lm_bewerkBtn').textContent='✏️ Bewerken';
+  document.getElementById('lm_bewerkBtn').style.background='#fff';
+  document.getElementById('lm_bewerkBtn').style.color='#475569';
+  document.getElementById('lm_naam').textContent=loc.naam;
+  document.getElementById('lm_stad').textContent=loc.stad;
+  toast('Locatie opgeslagen');
+  renderLocatieModalBody();
+  renderRayon();
+}
+
+// ═══════════════════════════════════════════════════════
+// MEDEWERKERS
+// ═══════════════════════════════════════════════════════
+function updateMwLocFilter() {
+  const sel = document.getElementById('mwLocFilter');
+  if (!sel) return;
+  sel.innerHTML = '<option value="alle">Alle locaties</option>' +
+    locaties.map(l=>`<option value="${l.id}">${l.naam}</option>`).join('');
+}
+
+function renderMedewerkers() {
+  const zoek = (document.getElementById('mwZoek')||{}).value||'';
+  const filter = (document.getElementById('mwLocFilter')||{}).value||'alle';
+  const sort = (document.getElementById('mwSort')||{}).value||'naam';
+
+  let list = medewerkers.filter(m=>{
+    const lm = filter==='alle'||m.locatieId===parseInt(filter);
+    const zm = !zoek||m.naam.toLowerCase().includes(zoek.toLowerCase())||m.functie?.toLowerCase().includes(zoek.toLowerCase());
+    return lm&&zm;
+  }).sort((a,b)=>{
+    if(sort==='naam') return a.naam.localeCompare(b.naam);
+    if(sort==='uren') return totaalUrenMw(b)-totaalUrenMw(a);
+    if(sort==='locatie') return (locatieVan(a.locatieId).naam||'').localeCompare(locatieVan(b.locatieId).naam||'');
+    return 0;
+  });
+
+  const totalUren = list.reduce((s,m)=>s+totaalUrenMw(m),0);
+  document.getElementById('mwSubtitle').textContent = `${medewerkers.length} medewerkers · ${fmt(medewerkers.reduce((s,m)=>s+totaalUrenMw(m),0))} uur/week ingepland`;
+
+  const tbody = document.getElementById('mwTbody');
+  if (!list.length) {
+    tbody.innerHTML=`<tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8">Geen medewerkers gevonden. Klik op "+ Medewerker toevoegen".</td></tr>`;
+    document.getElementById('mwTfoot').innerHTML='';
+    return;
+  }
+
+  tbody.innerHTML = list.map(m=>{
+    const loc = locatieVan(m.locatieId);
+    const uren = totaalUrenMw(m);
+    const dagSet = [...new Set((m.diensten||[]).map(d=>d.split(' ')[0]))];
+    const pct = Math.min(100, (uren/40)*100);
+    return `<tr onclick="openMwModal(${m.id})">
+      <td><div class="flex gap-8" style="align-items:center">
+        <div style="width:34px;height:34px;border-radius:10px;background:${loc.kleur||'#3b82f6'}20;display:flex;align-items:center;justify-content:center;font-weight:700;color:${loc.kleur||'#3b82f6'};font-size:14px;flex-shrink:0">${m.naam?.charAt(0)||'?'}</div>
+        <div><div style="font-weight:600">${m.naam}</div><div style="font-size:11px;color:#94a3b8">${m.email||''}</div></div>
+      </div></td>
+      <td style="color:#475569">${m.functie||''}</td>
+      <td>${loc.naam?`<span class="badge" style="background:${loc.kleur}15;color:${loc.kleur}">${loc.naam}</span>`:'<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${uren>0?`<div class="flex gap-8" style="align-items:center">
+        <div class="progress-wrap" style="width:48px"><div class="progress-bar" style="width:${pct}%;background:#3b82f6"></div></div>
+        <span style="font-weight:700">${fmt(uren)}</span></div>`:'<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${dagSet.length?dagSet.map(d=>`<span class="dag-tag" style="background:#f1f5f9;color:#475569">${d}</span>`).join(''):'<span style="color:#cbd5e1">—</span>'}</td>
+      <td style="color:#64748b">${(() => {
+        const invs = m.invallers && m.invallers.length ? m.invallers
+          : (m.invaller && m.invaller.trim() && !['????','Vlinder','Vervangen elkaar','Collega van Zone','door de week','Weekend',''].includes(m.invaller.trim()))
+            ? [{naam: m.invaller, notitie:''}] : [];
+        return invs.length
+          ? invs.map(inv=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:600;margin:1px">${inv.naam}</span>`).join('')
+          : '<span style="color:#cbd5e1">—</span>';
+      })()}</td>
+      <td><span class="badge ${m.beschikbaar!==false?'badge-green':'badge-red'}">${m.beschikbaar!==false?'Beschikbaar':'Niet beschikbaar'}</span></td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-secondary btn-sm" onclick="openMwModal(${m.id})">✏️ Bewerken</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('mwTfoot').innerHTML = `<tr>
+    <td colspan="3" style="padding:11px 16px;font-size:11px;color:#475569">TOTAAL (${list.length} mw.)</td>
+    <td style="padding:11px 16px;font-size:14px;color:#1a2332">${fmt(totalUren)} uur</td>
+    <td colspan="4"></td></tr>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// MEDEWERKER MODAL
+// ═══════════════════════════════════════════════════════
+function openNieuweMedewerker() {
+  activMwId = '__nieuw__';
+  mwDiensten = [];
+  renderMwModal({ id:'__nieuw__',naam:'',functie:'Schoonmaakmedewerker',email:'',telefoon:'',locatieId:locaties[0]?.id||1,beschikbaar:true,diensten:[],_dienstenRaw:[] });
+  document.getElementById('medewerkerModal').style.display='flex';
+}
+
+function openMwModal(id) {
+  const mw = medewerkerVan(id);
+  if (!mw) return;
+  activMwId = id;
+  mwDiensten = (mw._dienstenRaw||[]).map(d=>({...d}));
+  if (!mwDiensten.length && mw.diensten?.length) {
+    mwDiensten = mw.diensten.map(s=>{
+      const m=s.match(/^(\w+)\s+(\d+:\d+)-(\d+:\d+)$/);
+      return m?{dag:m[1],van:m[2],tot:m[3],uren:'',notitie:''}:{dag:s,van:'',tot:'',uren:'',notitie:''};
+    });
+  }
+  renderMwModal(mw);
+  document.getElementById('medewerkerModal').style.display='flex';
+}
+
+function sluitMwModal() {
+  document.getElementById('medewerkerModal').style.display='none';
+  activMwId=null; mwDiensten=[];
+}
+
+function renderMwModal(mw) {
+  const naam = mw.naam||'Nieuwe medewerker';
+  document.getElementById('mm_avatar').textContent = naam.charAt(0)||'+';
+  document.getElementById('mm_naam_header').textContent = naam;
+  document.getElementById('mm_functie_header').textContent = mw.functie||'';
+
+  const totUren = mwDiensten.reduce((s,d)=>s+(parseFloat(d.uren)||berekenUren(d.van,d.tot)),0);
+
+  const locOpts = locaties.map(l=>`<option value="${l.id}" ${l.id===mw.locatieId?'selected':''}>${l.naam}</option>`).join('');
+
+  const dienstRows = mwDiensten.map((d,i)=>{
+    const auto = berekenUren(d.van,d.tot);
+    const getoond = d.uren ? parseFloat(d.uren) : auto;
+    const dagOpts = DAGEN.map(g=>`<option value="${g}" ${g===d.dag?'selected':''}>${DAGEN_LANG[g]}</option>`).join('');
+    const pct = Math.min(100,(getoond/12)*100);
+    return `<div class="dienst-row">
+      <div class="dienst-grid">
+        <div><label class="field-label" style="font-size:10px">DAG</label>
+          <select id="dd_dag_${i}" onchange="updateDienst(${i},'dag',this.value)">${dagOpts}</select></div>
+        <div><label class="field-label" style="font-size:10px">VAN</label>
+          <input type="time" id="dd_van_${i}" value="${d.van||''}" onchange="updateDienst(${i},'van',this.value)"></div>
+        <div><label class="field-label" style="font-size:10px">TOT</label>
+          <input type="time" id="dd_tot_${i}" value="${d.tot||''}" onchange="updateDienst(${i},'tot',this.value)"></div>
+        <div><label class="field-label" style="font-size:10px">UREN</label>
+          <input type="number" id="dd_uren_${i}" step="0.25" value="${d.uren||''}" placeholder="${auto?auto.toFixed(2):'—'}" onchange="updateDienst(${i},'uren',this.value)"></div>
+        <div><label class="field-label" style="font-size:10px">NOTITIE</label>
+          <input id="dd_not_${i}" value="${d.notitie||''}" placeholder="bv. Locatie B" onchange="updateDienst(${i},'notitie',this.value)"></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-danger" style="width:34px;height:36px;border-radius:7px;font-size:14px" onclick="verwijderDienst(${i})">✕</button>
+        </div>
+      </div>
+      ${getoond>0?`<div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${pct}%;background:#3b82f6"></div></div>
+        <span style="font-size:11px;font-weight:700;color:#3b82f6;white-space:nowrap">${d.uren?fmt(parseFloat(d.uren))+' uur (handmatig)':fmt(auto)+' uur berekend'}</span>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  // Week overview
+  let weekHtml='';
+  if (mwDiensten.length) {
+    const dagBoxen = DAGEN.map(dag=>{
+      const ds = mwDiensten.filter(d=>d.dag===dag);
+      if (!ds.length) return '';
+      const u = ds.reduce((s,d)=>s+(parseFloat(d.uren)||berekenUren(d.van,d.tot)),0);
+      return `<div class="week-day-box"><div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase">${dag}</div>
+        <div style="font-size:13px;font-weight:800;color:#1d4ed8">${fmtShort(u)}<span style="font-size:9px">u</span></div></div>`;
+    }).join('');
+    weekHtml=`<div class="week-overview">
+      <span style="font-size:11px;font-weight:800;color:#1d4ed8">WEEKOVERZICHT:</span>
+      ${dagBoxen}
+      <div style="margin-left:auto;background:#1d4ed8;border-radius:8px;padding:5px 12px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:#93c5fd">TOTAAL</div>
+        <div style="font-size:14px;font-weight:800;color:#fff">${fmt(totUren)}u</div>
+      </div></div>`;
+  }
+
+  // Build panden sectie — see pandenHtml block above
+  // Build gekoppelde panden sectie (editable)
+  const alleLocs = [{locatieId: mw.locatieId, primair: true}, ...(mw.extraLocaties||[]).map(e=>({locatieId:e.locatieId, primair:false}))];
+  let pandenRijen = '';
+  alleLocs.forEach((el, idx) => {
+    const l2 = locatieVan(el.locatieId);
+    const kleur = l2.kleur||'#3b82f6';
+    const uren2 = (el._dienstenRaw||[]).reduce((s,d)=>s+(parseFloat(d.uren)||berekenUren(d.van,d.tot)),0);
+    const dags = (el.diensten||[]).map(d=>d.split(' ')[0]);
+    const dagSpans = dags.map(d=>'<span class="dag-tag" style="background:'+kleur+'18;color:'+kleur+'">'+d+'</span>').join('');
+    const urenTxt = uren2>0 ? '<span style="font-size:11px;font-weight:700;color:#475569;margin-left:6px">'+uren2.toFixed(2).replace('.',',')+'u/w</span>' : '<span style="font-size:11px;color:#94a3b8;margin-left:6px">Uren in te vullen via Rayonboek</span>';
+    const primairBadge = el.primair ? '<span style="padding:2px 7px;border-radius:8px;background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;margin-left:6px">PRIMAIR</span>' : '';
+    const verwijderBtn = el.primair ? '' : '<button onclick="ontkoppelPand('+idx+')" style="flex-shrink:0;width:30px;height:30px;border:none;background:#fee2e2;color:#dc2626;border-radius:7px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>';
+    pandenRijen += '<div id="pand_rij_'+idx+'" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#f8fafc;border-radius:10px;border-left:4px solid '+kleur+'">'
+      + '<div style="flex:1">'
+      + '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span style="font-weight:700;font-size:13px">'+(l2.naam||'Onbekend')+'</span>'+primairBadge+'</div>'
+      + '<div style="font-size:11px;color:#64748b">'+(l2.adres?l2.adres+', ':'')+l2.stad+'</div>'
+      + (dagSpans ? '<div style="margin-top:5px">'+dagSpans+urenTxt+'</div>' : '<div style="margin-top:4px;font-size:11px;color:#94a3b8">'+urenTxt+'</div>')
+      + '</div>'
+      + verwijderBtn
+      + '</div>';
+  });
+
+  // Dropdown with locaties not yet linked
+  const gekoppeldeIds = new Set(alleLocs.map(e=>e.locatieId));
+  const beschikbareLocs = locaties.filter(l=>!gekoppeldeIds.has(l.id));
+  const locOptsPand = beschikbareLocs.map(l=>'<option value="'+l.id+'">'+l.naam+(l.stad?' – '+l.stad:'')+'</option>').join('');
+
+  const pandenHtml = '<div>'
+    + '<div class="modal-section-title" style="display:flex;justify-content:space-between;align-items:center">'
+    + '<span>GEKOPPELDE PANDEN ('+alleLocs.length+')</span>'
+    + '</div>'
+    + '<div id="pandenContainer" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">'+pandenRijen+'</div>'
+    + (beschikbareLocs.length ? '<div style="display:flex;gap:8px;align-items:center">'
+      + '<select id="pandToevoegenSelect" style="flex:1"><option value="">— Kies een pand om te koppelen —</option>'+locOptsPand+'</select>'
+      + '<button class="btn btn-secondary btn-sm" onclick="koppelPandAanMw()" style="white-space:nowrap;padding:9px 14px">+ Koppelen</button>'
+      + '</div>'
+      : '<div style="font-size:12px;color:#94a3b8;font-style:italic">Alle locaties zijn al gekoppeld</div>')
+    + '</div>';
+
+  document.getElementById('mwModalBody').innerHTML = `
+    <div>
+      <div class="modal-section-title">PERSOONSGEGEVENS</div>
+      <div class="grid-2">
+        <div><label class="field-label">NAAM</label><input id="mm_naam" value="${(mw.naam||'').replace(/"/g,'&quot;')}" oninput="updateMwHeader()"></div>
+        <div><label class="field-label">FUNCTIE</label><input id="mm_functie" value="${(mw.functie||'').replace(/"/g,'&quot;')}"></div>
+        <div><label class="field-label">E-MAIL</label><input id="mm_email" value="${(mw.email||'').replace(/"/g,'&quot;')}"></div>
+        <div><label class="field-label">TELEFOON</label><input id="mm_telefoon" value="${(mw.telefoon||'').replace(/"/g,'&quot;')}"></div>
+        <div><label class="field-label">PRIMAIRE LOCATIE</label><select id="mm_locatie">${locOpts}</select></div>
+        ${mw.personeelsnr?`<div><label class="field-label">PERSONEELSNR</label><input id="mm_personeelsnr" value="${mw.personeelsnr||''}"></div>`:''}
+        ${mw.contracturen?`<div><label class="field-label">CONTRACTUREN / WEEK</label><input type="number" id="mm_contracturen" step="0.25" value="${mw.contracturen||''}"></div>`:''}
+        <div><label class="field-label">BESCHIKBAARHEID</label>
+          <button id="mm_beschBtn" class="btn" style="width:100%;padding:9px;border-radius:8px;border:2px solid;font-size:13px;font-weight:600;background:${mw.beschikbaar!==false?'#dcfce7':'#fee2e2'};border-color:${mw.beschikbaar!==false?'#16a34a':'#dc2626'};color:${mw.beschikbaar!==false?'#166534':'#dc2626'}" onclick="toggleBesch()">
+            ${mw.beschikbaar!==false?'✓ Beschikbaar':'✕ Niet beschikbaar'}
+          </button></div>
+      </div>
+    </div>
+    <div>
+      <div class="modal-section-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>VASTE INVALLERS</span>
+        <button class="btn btn-secondary btn-sm" onclick="voegInvallerToe()">+ Invaller toevoegen</button>
+      </div>
+      <div id="invallerContainer" style="display:flex;flex-direction:column;gap:8px">
+        ${(mw.invallers&&mw.invallers.length)?mw.invallers.map((inv,i)=>renderInvallerRij(inv,i)).join('')
+          : mw.invaller&&mw.invaller.trim()&&!['????','Vlinder','Vervangen elkaar','Collega van Zone','door de week','Weekend'].includes(mw.invaller.trim())
+            ? renderInvallerRij({naam:mw.invaller,notitie:''},0)
+            : '<div style="padding:14px;background:#f8fafc;border-radius:10px;text-align:center;color:#94a3b8;font-size:13px">Nog geen invallers — klik op "+ Invaller toevoegen"</div>'}
+      </div>
+    </div>
+    ${pandenHtml}
+    <div>
+      <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #f1f5f9">
+        <div style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:1px">DIENSTEN PRIMAIR PAND — ${fmt(totUren)} UUR/WEEK</div>
+        <button class="btn btn-secondary btn-sm" onclick="voegDienstToe()">+ Dienst toevoegen</button>
+      </div>
+      <div class="flex-col gap-8" id="dienstenContainer">
+        ${mwDiensten.length?dienstRows:'<div style="padding:16px;background:#f8fafc;border-radius:10px;text-align:center;color:#94a3b8;font-size:13px">Nog geen diensten — klik op "+ Dienst toevoegen"</div>'}
+      </div>
+      ${weekHtml}
+    </div>
+    <div class="flex gap-8">
+      <button class="btn btn-primary" style="flex:1" onclick="slaMwOp()">✓ Opslaan</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="sluitMwModal()">Annuleren</button>
+    </div>`;
+}
+
+function koppelPandAanMw() {
+  const sel = document.getElementById('pandToevoegenSelect');
+  if (!sel || !sel.value) { toast('Selecteer eerst een pand', 'info'); return; }
+  const locId = parseInt(sel.value);
+  const mw = medewerkerVan(activMwId);
+  if (!mw) return;
+  if (!mw.extraLocaties) mw.extraLocaties = [];
+  // Prevent duplicates
+  if (mw.locatieId === locId || mw.extraLocaties.some(e=>e.locatieId===locId)) {
+    toast('Dit pand is al gekoppeld', 'info'); return;
+  }
+  mw.extraLocaties.push({ locatieId: locId, diensten: [], _dienstenRaw: [] });
+  const loc = locatieVan(locId);
+  toast(loc.naam + ' gekoppeld');
+  // Re-render modal to reflect change
+  renderMwModal(mw);
+}
+
+function ontkoppelPand(idx) {
+  const mw = medewerkerVan(activMwId);
+  if (!mw) return;
+  // idx 0 = primair pand, can't remove
+  if (idx === 0) { toast('Primair pand kan niet ontkoppeld worden — wijzig via Primaire Locatie', 'info'); return; }
+  const extraIdx = idx - 1; // offset because index 0 is the primary
+  if (!mw.extraLocaties || extraIdx < 0 || extraIdx >= mw.extraLocaties.length) return;
+  const loc = locatieVan(mw.extraLocaties[extraIdx].locatieId);
+  if (!confirm('Pand "' + (loc.naam||'?') + '" ontkoppelen van ' + mw.naam + '?')) return;
+  mw.extraLocaties.splice(extraIdx, 1);
+  toast((loc.naam||'Pand') + ' ontkoppeld', 'info');
+  renderMwModal(mw);
+}
+
+function renderInvallerRij(inv, i) {
+  const naam = (inv.naam||'').replace(/"/g,'&quot;');
+  const notitie = (inv.notitie||'').replace(/"/g,'&quot;');
+  // Autocomplete options from existing medewerkers
+  const opts = medewerkers.map(m=>`<option value="${m.naam.replace(/"/g,'&quot;')}">`).join('');
+  return `<div class="dienst-row" id="inv_row_${i}" style="display:flex;align-items:center;gap:10px;padding:12px 14px">
+    <div style="flex:1;position:relative">
+      <label class="field-label" style="font-size:10px">NAAM INVALLER</label>
+      <div style="position:relative">
+        <input id="inv_naam_${i}" list="inv_list_${i}" value="${naam}" placeholder="Naam invaller..." oninput="filterInvallerList(${i},this.value)" style="padding-right:32px">
+        <datalist id="inv_list_${i}">${opts}</datalist>
+      </div>
+    </div>
+    <div style="flex:1">
+      <label class="field-label" style="font-size:10px">NOTITIE (optioneel)</label>
+      <input id="inv_notitie_${i}" value="${notitie}" placeholder="bv. alleen ochtend, via bureau...">
+    </div>
+    <div style="display:flex;align-items:flex-end;padding-bottom:1px">
+      <button class="btn btn-danger" style="width:34px;height:36px;border-radius:7px;font-size:14px;flex-shrink:0" onclick="verwijderInvaller(${i})">✕</button>
+    </div>
+  </div>`;
+}
+
+function getCurrentInvallers() {
+  const container = document.getElementById('invallerContainer');
+  if (!container) return [];
+  const rows = container.querySelectorAll('[id^="inv_row_"]');
+  const result = [];
+  rows.forEach((row, i) => {
+    const naamEl = document.getElementById(`inv_naam_${i}`);
+    const notEl = document.getElementById(`inv_notitie_${i}`);
+    const naam = naamEl ? naamEl.value.trim() : '';
+    if (naam) result.push({ naam, notitie: notEl ? notEl.value.trim() : '' });
+  });
+  return result;
+}
+
+function voegInvallerToe() {
+  // Collect current invallers from DOM first
+  const huidig = getCurrentInvallers();
+  const mw = medewerkerVan(activMwId) || {};
+  mw.invallers = huidig;
+  const idx = huidig.length;
+  const container = document.getElementById('invallerContainer');
+  if (!container) return;
+  // Remove empty state message if present
+  const empty = container.querySelector('div:not([id])');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.innerHTML = renderInvallerRij({naam:'',notitie:''}, idx);
+  container.appendChild(div.firstElementChild);
+}
+
+function verwijderInvaller(idx) {
+  const row = document.getElementById(`inv_row_${idx}`);
+  if (row) row.remove();
+  // Re-index remaining rows
+  const container = document.getElementById('invallerContainer');
+  if (!container) return;
+  const rows = [...container.querySelectorAll('[id^="inv_row_"]')];
+  rows.forEach((row, newIdx) => {
+    row.id = `inv_row_${newIdx}`;
+    const nEl = row.querySelector('[id^="inv_naam_"]'); if (nEl) nEl.id = `inv_naam_${newIdx}`;
+    const nListEl = row.querySelector('[id^="inv_list_"]'); if (nListEl) nListEl.id = `inv_list_${newIdx}`;
+    const notEl = row.querySelector('[id^="inv_notitie_"]'); if (notEl) notEl.id = `inv_notitie_${newIdx}`;
+    const delBtn = row.querySelector('button'); if (delBtn) delBtn.setAttribute('onclick', `verwijderInvaller(${newIdx})`);
+  });
+  if (!rows.length) {
+    container.innerHTML = '<div style="padding:14px;background:#f8fafc;border-radius:10px;text-align:center;color:#94a3b8;font-size:13px">Nog geen invallers — klik op "+ Invaller toevoegen"</div>';
+  }
+}
+
+function filterInvallerList(idx, q) {
+  // datalist handles filtering natively; this is just a hook if needed
+}
+
+function updateMwHeader() {
+  const n = document.getElementById('mm_naam').value;
+  document.getElementById('mm_naam_header').textContent = n||'Nieuwe medewerker';
+  document.getElementById('mm_avatar').textContent = n.charAt(0)||'+';
+}
+
+function toggleBesch() {
+  const btn = document.getElementById('mm_beschBtn');
+  const isBesch = btn.textContent.includes('Beschikbaar') && !btn.textContent.includes('Niet');
+  if (isBesch) {
+    btn.style.background='#fee2e2'; btn.style.borderColor='#dc2626'; btn.style.color='#dc2626';
+    btn.textContent='✕ Niet beschikbaar';
+  } else {
+    btn.style.background='#dcfce7'; btn.style.borderColor='#16a34a'; btn.style.color='#166534';
+    btn.textContent='✓ Beschikbaar';
+  }
+}
+
+function voegDienstToe() {
+  mwDiensten.push({dag:'ma',van:'08:00',tot:'16:00',uren:'',notitie:''});
+  refreshDienstenContainer();
+}
+
+function verwijderDienst(idx) {
+  mwDiensten.splice(idx,1);
+  refreshDienstenContainer();
+}
+
+function updateDienst(idx, veld, val) {
+  mwDiensten[idx][veld]=val;
+  refreshDienstenContainer();
+}
+
+function refreshDienstenContainer() {
+  const totUren = mwDiensten.reduce((s,d)=>s+(parseFloat(d.uren)||berekenUren(d.van,d.tot)),0);
+  // Update header
+  const headers = document.querySelectorAll('#mwModalBody .modal-section-title + .flex div:first-child');
+
+  const dienstRows = mwDiensten.map((d,i)=>{
+    const auto = berekenUren(d.van,d.tot);
+    const getoond = d.uren ? parseFloat(d.uren) : auto;
+    const dagOpts = DAGEN.map(g=>`<option value="${g}" ${g===d.dag?'selected':''}>${DAGEN_LANG[g]}</option>`).join('');
+    const pct = Math.min(100,(getoond/12)*100);
+    return `<div class="dienst-row">
+      <div class="dienst-grid">
+        <div><label class="field-label" style="font-size:10px">DAG</label>
+          <select id="dd_dag_${i}" onchange="updateDienst(${i},'dag',this.value)">${dagOpts}</select></div>
+        <div><label class="field-label" style="font-size:10px">VAN</label>
+          <input type="time" id="dd_van_${i}" value="${d.van||''}" onchange="updateDienst(${i},'van',this.value)"></div>
+        <div><label class="field-label" style="font-size:10px">TOT</label>
+          <input type="time" id="dd_tot_${i}" value="${d.tot||''}" onchange="updateDienst(${i},'tot',this.value)"></div>
+        <div><label class="field-label" style="font-size:10px">UREN</label>
+          <input type="number" id="dd_uren_${i}" step="0.25" value="${d.uren||''}" placeholder="${auto?auto.toFixed(2):'—'}" onchange="updateDienst(${i},'uren',this.value)"></div>
+        <div><label class="field-label" style="font-size:10px">NOTITIE</label>
+          <input id="dd_not_${i}" value="${d.notitie||''}" placeholder="bv. Locatie B" onchange="updateDienst(${i},'notitie',this.value)"></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-danger" style="width:34px;height:36px;border-radius:7px;font-size:14px" onclick="verwijderDienst(${i})">✕</button>
+        </div>
+      </div>
+      ${getoond>0?`<div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${pct}%;background:#3b82f6"></div></div>
+        <span style="font-size:11px;font-weight:700;color:#3b82f6;white-space:nowrap">${d.uren?fmt(parseFloat(d.uren))+' uur (handmatig)':fmt(auto)+' uur berekend'}</span>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  const dagBoxen = DAGEN.map(dag=>{
+    const ds=mwDiensten.filter(d=>d.dag===dag);
+    if(!ds.length) return '';
+    const u=ds.reduce((s,d)=>s+(parseFloat(d.uren)||berekenUren(d.van,d.tot)),0);
+    return `<div class="week-day-box"><div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase">${dag}</div>
+      <div style="font-size:13px;font-weight:800;color:#1d4ed8">${fmtShort(u)}<span style="font-size:9px">u</span></div></div>`;
+  }).join('');
+
+  const weekHtml = mwDiensten.length?`<div class="week-overview">
+    <span style="font-size:11px;font-weight:800;color:#1d4ed8">WEEKOVERZICHT:</span>
+    ${dagBoxen}
+    <div style="margin-left:auto;background:#1d4ed8;border-radius:8px;padding:5px 12px;text-align:center">
+      <div style="font-size:10px;font-weight:700;color:#93c5fd">TOTAAL</div>
+      <div style="font-size:14px;font-weight:800;color:#fff">${fmt(totUren)}u</div>
+    </div></div>`:'';
+
+  const container = document.getElementById('dienstenContainer');
+  if (container) {
+    container.innerHTML = mwDiensten.length?dienstRows:'<div style="padding:16px;background:#f8fafc;border-radius:10px;text-align:center;color:#94a3b8;font-size:13px">Nog geen diensten</div>';
+    // Update weekoverzicht (sibling)
+    const existing = container.nextElementSibling;
+    if (existing && existing.classList.contains('week-overview')) existing.remove();
+    if (weekHtml) container.insertAdjacentHTML('afterend', weekHtml);
+  }
+  // Update header label
+  const sectHead = document.querySelector('#mwModalBody [style*="font-weight:800"][style*="letter-spacing"]');
+  if (sectHead) sectHead.textContent = `DIENSTEN — ${fmt(totUren)} UUR/WEEK`;
+}
+
+function slaMwOp() {
+  const naam = document.getElementById('mm_naam').value.trim();
+  if (!naam) { toast('Vul een naam in','info'); return; }
+  const beschBtn = document.getElementById('mm_beschBtn');
+  const beschikbaar = !beschBtn.textContent.includes('Niet');
+  const locatieId = parseInt(document.getElementById('mm_locatie').value);
+
+  const dienstenStr = mwDiensten.map(d=>d.van&&d.tot?`${d.dag} ${d.van}-${d.tot}`:d.dag);
+
+  const pnrEl = document.getElementById('mm_personeelsnr');
+  const ctEl = document.getElementById('mm_contracturen');
+  const curMw = medewerkerVan(activMwId) || {};
+  const updated = {
+    naam, functie: document.getElementById('mm_functie').value,
+    email: document.getElementById('mm_email').value,
+    telefoon: document.getElementById('mm_telefoon').value,
+    locatieId, beschikbaar,
+    diensten: dienstenStr,
+    _dienstenRaw: mwDiensten.map(d=>({...d})),
+    personeelsnr: pnrEl ? pnrEl.value : (curMw.personeelsnr||''),
+    contracturen: ctEl ? parseFloat(ctEl.value)||0 : (curMw.contracturen||0),
+    invaller: curMw.invaller||'',
+    invallers: getCurrentInvallers(),
+    extraLocaties: curMw.extraLocaties||[],
+  };
+
+  if (activMwId==='__nieuw__') {
+    updated.id = Date.now();
+    medewerkers.push(updated);
+    toast(`${naam} toegevoegd`);
+  } else {
+    const idx = medewerkers.findIndex(m=>m.id===activMwId);
+    if (idx>=0) { updated.id=activMwId; medewerkers[idx]=updated; }
+    toast('Medewerker opgeslagen');
+  }
+
+  sluitMwModal();
+  renderMedewerkers();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.getElementById('weekLabel').textContent = getWeekLabel();
+updateMwLocFilter();
+renderDashboard();
+renderRayon();
+
+// Close search dropdown on outside click
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.search-wrap')) {
+    const dd=document.getElementById('zoekDropdown');
+    if(dd) dd.style.display='none';
+  }
+});
+</script>
+</body>
+</html>
